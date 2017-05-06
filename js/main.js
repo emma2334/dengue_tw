@@ -1,9 +1,54 @@
-d3.json("./data/city.json", function(topodata) {
-  var features = topojson.feature(topodata, topodata.objects["city"]).features;
-    // 這裡要注意的是 topodata.objects["city"] 中的 "city" 為原本 shp 的檔名
+var svg = d3.select("svg#map");
+var projection = d3.geo.mercator()
+  .center([121,24])
+  .scale(6000);
+var path = d3.geo.path().projection(projection);
 
-  var path = d3.geo.path().projection( // 路徑產生器
-    d3.geo.mercator().center([121,24]).scale(6000) // 座標變換函式
-  );
-  d3.select("svg#map").selectAll("path").data(features).enter().append("path").attr({ id: function(d){return d.properties["C_Name"];}, d: path });
+var getCity = new Promise(function(resolve) {
+  d3.json("./data/city.json", function(topodata) {
+    resolve(topojson.feature(topodata, topodata.objects["city"]).features);
+  });
 });
+
+var getTown = new Promise(function(resolve) {
+  d3.json("./data/town.json", function(topodata) {
+    resolve(topojson.feature(topodata, topodata.objects["town"]).features);
+  });
+});
+
+(function() {
+  Promise.all([
+      getCity,
+      getTown
+    ])
+    .then(function(data) {
+      var [cityFeatures, townFeatures] = data;
+
+      svg
+        .append("g")
+        .selectAll("path")
+        .data(cityFeatures).enter()
+        .append("path").attr({
+          class: "city",
+          id: function(d) {
+            return d.properties["C_Name"];
+          },
+          d: path
+        });
+
+      svg
+        .append("g")
+        .selectAll("path")
+        .data(townFeatures).enter()
+        .append("path")
+        .attr({
+          class: function(d) {
+            return `town ${d.properties["C_Name"]}`;
+          },
+          id: function(d) {
+            return d.properties["T_Name"];
+          },
+          d: path
+        });
+    });
+})();

@@ -5,4 +5,6 @@ body {
 svg#map {
   width: 100vw;
   height: 100vh;
+  display: block;
+  background: #CCEEFF;
 }
