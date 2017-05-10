@@ -1,3 +1,4 @@
+// set up map data
 var map = d3.select("svg#map").node().getBoundingClientRect();
 var svg = d3.select("svg#map").attr('viewBox', `0 0 ${map.width} ${map.height}`);
 var projection = d3.geo.mercator()
@@ -18,13 +19,24 @@ var getTown = new Promise(function(resolve) {
   });
 });
 
+// set up dengue data
+var rawData, fData;
+var start, end;
+var getData = new Promise(function(resolve) {
+  csv = d3.dsv(",", "text/csv;charset=big5");
+  csv("https://nidss.cdc.gov.tw/Download/Age_County_Gender_061.csv", function(data){
+    resolve(data);
+  });
+});
+
 (function() {
   Promise.all([
       getCity,
-      getTown
+      getTown,
+      getData
     ])
     .then(function(data) {
-      var [cityFeatures, townFeatures] = data;
+      var [cityFeatures, townFeatures, dataFeatures] = data;
 
       svg
         .append("g")
@@ -50,19 +62,14 @@ var getTown = new Promise(function(resolve) {
           },
           d: path
         });
+
+      rawData = dataFeatures;
+      start = d3.min(rawData, function(d){ return d["發病年份"] });
+      end = d3.max(rawData, function(d){ return d["發病年份"] });
+      fData = yearFilter(end);
+      colorMap();
     });
 })();
-
-var rawData, fData;
-var start, end;
-var csv = d3.dsv(",", "text/csv;charset=big5");
-csv("https://nidss.cdc.gov.tw/Download/Age_County_Gender_061.csv", function(data){
-  rawData = data;
-  start = d3.min(data, function(d){ return d["發病年份"] });
-  end = d3.max(data, function(d){ return d["發病年份"] });
-  fData = yearFilter(end);
-  colorMap();
-});
 
 function yearFilter(year){
   return rawData.filter(function(d){
