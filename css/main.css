@@ -11,6 +11,7 @@ svg#map {
 
 g.city, g.town {
   fill: #E4E4E4;
+  stroke: #633636;
   display: none;
 }
 
