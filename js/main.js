@@ -68,6 +68,7 @@ var getData = new Promise(function(resolve) {
       end = d3.max(rawData, function(d){ return d["發病年份"] });
       fData = yearFilter(end);
       colorMap();
+      monthChart();
     });
 })();
 
@@ -128,5 +129,71 @@ function colorMap(){
         fill: color(scale(tgt[j].values))
       });
     }
+  }
+}
+
+function monthChart(){
+  var monthCount = d3.nest()
+    .key(function(d){ return d["發病月份"] })
+    .rollup(function(d){
+      var count = 0;
+      for(var i=0; i<d.length; i++){
+        count += +d[i]["確定病例數"];
+      }
+      return count;
+    }).entries(fData);
+
+  var tgt = d3.select("#month svg").node().getBoundingClientRect();
+  var width = tgt.width - 80;
+  var height = tgt.height - 80;
+  // axis
+  var x = d3.scale.linear().range([0, width]);
+  var y = d3.scale.linear().range([height, 0]);
+  var xAxis = d3.svg.axis().scale(x).ticks(12).orient("bottom");
+  var yAxis = d3.svg.axis().scale(y).orient("left");
+
+  x.domain([0, 12]);
+  y.domain([0, d3.max(monthCount, function(d) { return d.values; })]).nice();
+
+  var svg = d3.select("#month svg");
+  svg.append("g")
+    .attr("class", "x axis")
+    .attr("transform", `translate(40,${height+40})`)
+    .call(xAxis);
+
+  svg.append("g")
+    .attr("class", "y axis")
+    .attr("transform", "translate(40,40)")
+    .call(yAxis);
+
+  // line
+  svg.datum(monthCount);
+  var line = d3.svg.line()
+    .interpolate("monotone")
+    .x(function(d) { return x(d.key); })
+    .y(function(d) { return y(d.values); });
+
+  svg.append("path")
+    .attr("class", "line")
+    .attr("d", line)
+    .attr("transform", "translate(40,40)");
+
+  svg.append("g").attr({ class: "point" }).attr("transform", "translate(40,40)");
+  for(var i=0; i<monthCount.length; i++){
+    svg.select("g.point").append("circle")
+      .attr({
+        cx: x(monthCount[i].key),
+        cy: y(monthCount[i].values),
+        r: 4,
+        fill: "red"
+      });
+    svg.select("g.point").append("text")
+      .attr({
+        x: x(monthCount[i].key),
+        y: y(monthCount[i].values),
+        "font-size": 12
+      })
+      .text(monthCount[i].values)
+      .attr("transform", "translate(-5,-10)");
   }
 }

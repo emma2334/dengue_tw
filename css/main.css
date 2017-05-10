@@ -1,3 +1,7 @@
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
 }
@@ -7,6 +11,7 @@ svg#map {
   height: 100vh;
   display: block;
   background: #CCEEFF;
+  float: left;
 }
 
 g.city, g.town {
@@ -17,4 +22,44 @@ g.city, g.town {
 
 g.city.active, g.town.active {
   display: block;
+}
+
+div.content {
+  width: 30vw;
+  height: 100vh;
+  float: right;
+  padding: 20px 0;
+}
+
+.content h2 {
+  margin: 0 20px;
+}
+
+#month>svg, #age>svg, #immigration>svg {
+  width: 100%;
+  height: 30vh;
+  min-height: 200px;
+}
+
+#month svg .axis text:first {
+  display: none;
+}
+
+path.line {
+  fill: none;
+  stroke: #666;
+  stroke-width: 1.5px;
+}
+
+.axis {
+  shape-rendering: crispEdges;
+}
+
+.x.axis path, .y.axis path , .y.axis line{
+  fill: none;
+  stroke: #000;
+}
+
+.x.axis line {
+  display: none;
 }
