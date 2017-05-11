@@ -21,7 +21,7 @@ var getTown = new Promise(function(resolve) {
 
 // set up dengue data
 var rawData, fData;
-var start, end;
+var start, end, total;
 var getData = new Promise(function(resolve) {
   csv = d3.dsv(",", "text/csv;charset=big5");
   csv("https://nidss.cdc.gov.tw/Download/Age_County_Gender_061.csv", function(data){
@@ -38,6 +38,7 @@ var getData = new Promise(function(resolve) {
     .then(function(data) {
       var [cityFeatures, townFeatures, dataFeatures] = data;
 
+      // map
       svg
         .append("g")
         .attr("class", "city active")
@@ -63,10 +64,28 @@ var getData = new Promise(function(resolve) {
           d: path
         });
 
+      // content
       rawData = dataFeatures;
-      start = d3.min(rawData, function(d){ return d["發病年份"] });
-      end = d3.max(rawData, function(d){ return d["發病年份"] });
+      start = d3.min(rawData, function(d){ return +d["發病年份"] });
+      end = d3.max(rawData, function(d){ return +d["發病年份"] });
       fData = yearFilter(end);
+
+      for(var i=end; i>=start; i--){
+        d3.select("#year").append("option").attr({ value: i }).html(i);
+      }
+      var count = d3.nest()
+        .key(function(d){ return d["確定病名"] })
+        .rollup(function(d){
+          var count = 0;
+          for(var i=0; i<d.length; i++){
+            count += +d[i]["確定病例數"];
+          }
+          return count;
+        }).entries(fData);
+        total = count[0].values;
+        d3.select("span.total").html(total);
+
+      // render svg
       colorMap();
       drawMonthChart();
       drawAgeChart();

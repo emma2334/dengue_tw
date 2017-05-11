@@ -45,6 +45,10 @@ div.content {
   overflow: scroll;
 }
 
+.content #overview {
+  margin: 0 20px 20px 20px;
+}
+
 .content h2 {
   margin: 0 20px;
 }
