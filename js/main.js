@@ -70,6 +70,7 @@ var getData = new Promise(function(resolve) {
       colorMap();
       drawMonthChart();
       drawAgeChart();
+      drawAbroadChart()
     });
 })();
 
@@ -144,9 +145,9 @@ function drawMonthChart(){
       return count;
     }).entries(fData);
 
-  var tgt = d3.select("#month svg").node().getBoundingClientRect();
-  var width = tgt.width - 80;
-  var height = tgt.height - 80;
+  var svg = d3.select("#month svg");
+  var width = svg.node().getBoundingClientRect().width - 80;
+  var height = svg.node().getBoundingClientRect().height - 80;
   // axis
   var x = d3.scale.linear().range([0, width]);
   var y = d3.scale.linear().range([height, 0]);
@@ -156,7 +157,6 @@ function drawMonthChart(){
   x.domain([0, 12]);
   y.domain([0, d3.max(monthCount, function(d) { return d.values; })]).nice();
 
-  var svg = d3.select("#month svg");
   svg.append("g")
     .attr("class", "x axis")
     .attr("transform", `translate(40,${height+40})`)
@@ -285,4 +285,64 @@ function drawAgeChart(){
       transform: "translate(40,40)"
     })
     .call(yAxis);
+}
+
+function drawAbroadChart(){
+  var abroadCount = d3.nest()
+    .key(function(d){ return d["是否為境外移入"] })
+    .rollup(function(d){
+      var count = 0;
+      for(var i=0; i<d.length; i++){
+        count += +d[i]["確定病例數"];
+      }
+      return count;
+    }).entries(fData);
+
+  var svg = d3.select("#abroad svg");
+  var width = svg.node().getBoundingClientRect().width;
+  var height = svg.node().getBoundingClientRect().height;
+
+  // bind
+  var pie = d3.layout.pie()
+    .sort(null)
+    .value(function(d) { return d.values; });
+  var sel = svg.selectAll("g.arc").data(pie(abroadCount));
+  var g_arc = sel.enter()
+    .append("g")
+    .attr("class","arc")
+    .attr("transform", `translate(${width/2},${height/2})`);
+  g_arc.append("path");
+  g_arc.append("text");
+  sel.exit().remove();;
+
+  // render
+  var radius = d3.min([width, height]);
+  var arc = d3.svg.arc()
+    .outerRadius(radius/2-20)
+    .innerRadius(0);
+
+  var color = d3.scale.category20();
+  svg.selectAll("g.arc").select("path").attr({
+    d: arc,
+    fill: function(d, i){
+      return color(i);
+    }
+  });
+
+  var total = 0;
+  abroadCount.forEach(function(d){
+    total += d.values;
+  });
+
+  svg.selectAll("g.arc")
+    .select("text")
+    .attr({
+      transform: function(d){
+        return `translate(${arc.centroid(d)})`;
+      },
+      "text-anchor": "middle"
+    })
+    .text(function(d) {
+      return `${d.data.key} ${((d.data.values/total)*100).toFixed(1)}%`;
+    });
 }
