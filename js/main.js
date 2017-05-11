@@ -182,6 +182,16 @@ function drawMonthChart(){
       return count;
     }).entries(fData);
 
+  // adjust data
+  var tmp = [];
+  for(var i=1; i<13; i++){
+    tmp.push({ key: i, values: 0 });
+  }
+  monthCount.forEach(function(d){
+    tmp[+d.key-1].values = d.values;
+  });
+  monthCount = tmp;
+
   var svg = d3.select("#month svg");
   var width = svg.node().getBoundingClientRect().width - 80;
   var height = svg.node().getBoundingClientRect().height - 80;
@@ -207,7 +217,7 @@ function drawMonthChart(){
   // line
   svg.datum(monthCount);
   var line = d3.svg.line()
-    .interpolate("monotone")
+    .interpolate("linear")
     .x(function(d) { return x(d.key); })
     .y(function(d) { return y(d.values); });
 
