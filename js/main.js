@@ -212,32 +212,57 @@ function drawAgeChart(){
       return count;
     }).entries(fData);
 
-  var tgt = d3.select("#age svg").node().getBoundingClientRect();
-  var width = tgt.width - 80;
-  var height = tgt.height - 80;
-  // axis
-  var x = d3.scale
+  var svg = d3.select("#age svg");
+  var width = svg.node().getBoundingClientRect().width - 80;
+  var height = svg.node().getBoundingClientRect().height - 80;
+
+  // scale
+  var x0 = d3.scale
     .ordinal()
     .domain(ageDomain)
-    .rangeBands([0, width],0,0);
+    .rangeBands([0, width],0.1);
+  var x1 = d3.scale
+    .ordinal()
+    .domain(["M", "F"])
+    .rangeBands([0, x0.rangeBand()], 0);
   var y = d3.scale.linear().range([height, 0]);
-  var xAxis = d3.svg.axis().scale(x).orient("bottom");
-  var yAxis = d3.svg.axis().scale(y).orient("left");
-
-  // x.domain([0, 12]);
   y.domain([0, d3.max(ageCount, function(d) {
       return d3.max(d.values, function(c){ return c.values });
-    })])
-    .nice();
+    })]).nice();
 
-  var svg = d3.select("#age svg");
+  // bar
+  var color = { M: "dodgerblue", F: "deeppink" }
+  svg.append("g").attr({
+    class: "bar",
+    transform: "translate(40,40)"
+  }).selectAll("g")
+    .data(ageCount)
+    .enter().append("g")
+      .attr("transform", function(d) { return "translate(" + x0(d.key) + ",0)"; })
+    .selectAll("rect")
+    .data(function(d) { return d.values; })
+    .enter().append("rect")
+      .attr("x", function(d) { return x1(d.key); })
+      .attr("y", function(d) { return y(d.values); })
+      .attr("width", x1.rangeBand())
+      .attr("height", function(d) { return height - y(d.values); })
+      .attr("fill", function(d) { return color[d.key]; });
+
+  // axis
+  var xAxis = d3.svg.axis().scale(x0).orient("bottom");
+  var yAxis = d3.svg.axis().scale(y).ticks(5).orient("left");
+
   svg.append("g")
-    .attr("class", "x axis")
-    .attr("transform", `translate(40,${height+40})`)
+    .attr({
+      class: "axis x",
+      transform: `translate(40,${height+40})`
+    })
     .call(xAxis);
 
   svg.append("g")
-    .attr("class", "y axis")
-    .attr("transform", "translate(40,40)")
+    .attr({
+      class: "axis y",
+      transform: "translate(40,40)"
+    })
     .call(yAxis);
 }

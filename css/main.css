@@ -22,7 +22,7 @@ svg#map {
 }
 
 g.city, g.town {
-  fill: #E4E4E4;
+  fill: #FFF;
   stroke: #633636;
 }
 
@@ -68,7 +68,7 @@ path.line {
   shape-rendering: crispEdges;
 }
 
-.x.axis path, .y.axis path , .y.axis line{
+.axis path , .y.axis line{
   fill: none;
   stroke: #000;
 }
@@ -78,7 +78,7 @@ path.line {
 }
 
 #age svg .x.axis text {
-  text-anchor: end;
+  text-anchor: end !important;
   -moz-transform:rotate(-45deg);
   -webkit-transform:rotate(-45deg);
   -o-transform:rotate(-45deg);
