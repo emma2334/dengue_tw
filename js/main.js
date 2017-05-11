@@ -212,6 +212,26 @@ function drawAgeChart(){
       return count;
     }).entries(fData);
 
+  ageCount.push({
+    key: "0-4",
+    values: [{ key: "M", values: 0 } ,{ key: "F", values: 0 }]
+  });
+
+  // adjust data
+  var tmp = [];
+  for(var i=0; i<(ageCount.length-1); i++){
+    if(Number.isInteger(+ageCount[i].key)){
+      ageCount[i].values.forEach(function(d){
+        if(d.key ==="M") ageCount[ageCount.length-1].values[0].values += +d.values;
+        else ageCount[ageCount.length-1].values[1].values += +d.values;
+      });
+      tmp.push(i);
+    }
+  }
+  while(tmp.length>0){
+    ageCount.splice(tmp.pop(), 1);
+  }
+
   var svg = d3.select("#age svg");
   var width = svg.node().getBoundingClientRect().width - 80;
   var height = svg.node().getBoundingClientRect().height - 80;
