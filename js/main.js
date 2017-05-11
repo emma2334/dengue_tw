@@ -89,7 +89,7 @@ var getData = new Promise(function(resolve) {
       colorMap();
       drawMonthChart();
       drawAgeChart();
-      drawAbroadChart()
+      drawAbroadChart();
     });
 })();
 
@@ -364,4 +364,19 @@ function drawAbroadChart(){
     .text(function(d) {
       return `${d.data.key} ${((d.data.values/total)*100).toFixed(1)}%`;
     });
+}
+
+function change(){
+  d3.selectAll(".content svg").html("");
+  drawMonthChart();
+  drawAgeChart();
+  drawAbroadChart();
+}
+
+function changeYear(){
+  var e = document.getElementById("year")
+  var year = e.options[e.selectedIndex].text;
+  fData = yearFilter(year);
+  change();
+  colorMap();
 }
