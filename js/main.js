@@ -20,8 +20,9 @@ var getTown = new Promise(function(resolve) {
 });
 
 // set up dengue data
-var rawData, fData;
+var rawData, fData, fData_time;
 var start, end, total;
+var area = "台灣";
 var getData = new Promise(function(resolve) {
   csv = d3.dsv(",", "text/csv;charset=big5");
   csv("https://nidss.cdc.gov.tw/Download/Age_County_Gender_061.csv", function(data){
@@ -68,7 +69,8 @@ var getData = new Promise(function(resolve) {
       rawData = dataFeatures;
       start = d3.min(rawData, function(d){ return +d["發病年份"] });
       end = d3.max(rawData, function(d){ return +d["發病年份"] });
-      fData = yearFilter(end);
+      fData_time = yearFilter(end);
+      fData = fData_time.slice();
 
       for(var i=end; i>=start; i--){
         d3.select("#year").append("option").attr({ value: i }).html(i);
@@ -367,6 +369,19 @@ function drawAbroadChart(){
 }
 
 function change(){
+  var count = d3.nest()
+    .key(function(d){ return d["確定病名"] })
+    .rollup(function(d){
+      var count = 0;
+      for(var i=0; i<d.length; i++){
+        count += +d[i]["確定病例數"];
+      }
+      return count;
+    }).entries(fData);
+  total = count[0].values;
+  d3.select("span.total").html(total);
+  d3.select("span.area").html(area);
+
   d3.selectAll(".content svg").html("");
   drawMonthChart();
   drawAgeChart();
@@ -376,7 +391,8 @@ function change(){
 function changeYear(){
   var e = document.getElementById("year")
   var year = e.options[e.selectedIndex].text;
-  fData = yearFilter(year);
+  fData_time = yearFilter(year);
+  fData = fData_time.slice();
   change();
   colorMap();
 }
