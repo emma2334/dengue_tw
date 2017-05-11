@@ -36,11 +36,11 @@ svg#map g.town path {
   display: none;
 }
 
-svg#map g.town.active path {
+svg#map g.town path.active {
   display: block;
 }
 
-svg#map g.active path:hover {
+svg#map g path:hover {
   fill: #FFFFB6;
   cursor: pointer;
 }

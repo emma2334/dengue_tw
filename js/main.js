@@ -46,7 +46,7 @@ var getData = new Promise(function(resolve) {
         .selectAll("path")
         .data(cityFeatures).enter()
         .append("path").attr({
-          id: function(d) {
+          class: function(d) {
             return d.properties["C_Name"];
           },
           d: path
@@ -95,7 +95,7 @@ var getData = new Promise(function(resolve) {
       drawAbroadChart();
 
       // data for zoom map
-      mapSvg = d3.select("#map g.city");
+      mapSvg = [ d3.select("#map g.city"), d3.select("#map g.town")];
     });
 })();
 
@@ -124,10 +124,10 @@ function colorMap(){
     }).entries(fData);
 
   var max = d3.max(cityCount, function(d){ return d.values });
-  var scale = d3.scale.linear().domain([0, max]).range([0, 20]);
+  var scale = d3.scale.linear().domain([1, max]).range([0, 20]);
 
   for(var i=0; i<cityCount.length; i++){
-    d3.select("#" + cityCount[i].key).attr({
+    d3.select("." + cityCount[i].key).attr({
       fill: color(scale(cityCount[i].values))
     });
   }
@@ -147,7 +147,7 @@ function colorMap(){
   max = d3.max(townCount, function(d){
     return d3.max(d.values, function(c){ return c.values });
   });
-  scale = d3.scale.linear().domain([0, max]).range([0, 20]);
+  scale = d3.scale.linear().domain([1, max]).range([0, 20]);
 
   for(var i=0; i<townCount.length; i++){
     var tgt = townCount[i].values;
@@ -408,9 +408,19 @@ var mapWidth = d3.select("#map").node().getBoundingClientRect().width;
 var mapHeight = d3.select("#map").node().getBoundingClientRect().height;
 
 function clicked(d) {
-  if (active.node() === this) return reset();
+  // if (active.node() === this) return reset();
   active.classed("active", false);
-  active = d3.select(this).classed("active", true);
+
+  // show town map
+  if(active.node() != null){
+    var className = active.attr("class");
+    d3.selectAll(`.${className}`).classed("active", false);
+  }
+  active = d3.select(this);
+  className = active.attr("class");
+  d3.selectAll(`.${className}`).classed("active", true);
+
+  active = active.classed("active", true);
 
   var bounds = path.bounds(d),
     dx = bounds[1][0] - bounds[0][0],
@@ -420,20 +430,30 @@ function clicked(d) {
     scale = .9 / Math.max(dx / mapWidth, dy / mapHeight),
     translate = [mapWidth / 2 - scale * x, mapHeight / 2 - scale * y];
 
-  mapSvg.transition()
+  mapSvg.forEach(function(d){
+    d.transition()
       .duration(750)
       .style("stroke-width", 1 / scale + "px")
       .attr("transform", "translate(" + translate + ")scale(" + scale + ")");
+  });
 }
 
 function reset() {
   active.classed("active", false);
+
+  if(active.node() != null){
+    var className = active.attr("class");
+    d3.selectAll(`.${className}`).classed("active", false);
+  }
+
   active = d3.select(null);
 
-  mapSvg.transition()
-    .duration(750)
-    .style("stroke-width", "1px")
-    .attr("transform", "");
+  mapSvg.forEach(function(d){
+    d.transition()
+      .duration(750)
+      .style("stroke-width", "1px")
+      .attr("transform", "");
+  });
 }
 
 d3.select("#map rect.background").on("click", reset);
