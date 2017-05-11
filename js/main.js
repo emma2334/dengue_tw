@@ -21,7 +21,7 @@ var getTown = new Promise(function(resolve) {
 
 // set up dengue data
 var rawData, fData, fData_time;
-var start, end, total;
+var start, end, total, tgtYear;
 var area = "台灣";
 var getData = new Promise(function(resolve) {
   csv = d3.dsv(",", "text/csv;charset=big5");
@@ -70,8 +70,8 @@ var getData = new Promise(function(resolve) {
       rawData = dataFeatures;
       start = d3.min(rawData, function(d){ return +d["發病年份"] });
       end = d3.max(rawData, function(d){ return +d["發病年份"] });
-      fData_time = yearFilter(end);
-      fData = fData_time.slice();
+      tgtYear = end;
+      fData = dataFilter(end, area);
 
       for(var i=end; i>=start; i--){
         d3.select("#year").append("option").attr({ value: i }).html(i);
@@ -99,10 +99,22 @@ var getData = new Promise(function(resolve) {
     });
 })();
 
-function yearFilter(year){
-  return rawData.filter(function(d){
-    return d["發病年份"] == year;
-  });
+function dataFilter(year, area){
+  if(area === "台灣"){
+    return rawData.filter(function(d){
+      return d["發病年份"] == year;
+    });
+  }else if(area.split(" ").length==1){
+    return rawData.filter(function(d){
+      return d["發病年份"] == year && d["縣市"] == area;
+    });
+  }else{
+    return rawData.filter(function(d){
+      var tmp = area.split(" ");
+      area = tmp[1];
+      return d["發病年份"] == year && d["縣市"] == tmp[0] && d["縣市"] == tmp[1];
+    });
+  }
 }
 
 function colorMap(){
@@ -373,6 +385,7 @@ function drawAbroadChart(){
 }
 
 function change(){
+  fData = dataFilter(tgtYear, area);
   var count = d3.nest()
     .key(function(d){ return d["確定病名"] })
     .rollup(function(d){
@@ -394,9 +407,8 @@ function change(){
 
 function changeYear(){
   var e = document.getElementById("year")
-  var year = e.options[e.selectedIndex].text;
-  fData_time = yearFilter(year);
-  fData = fData_time.slice();
+  tgtYear = e.options[e.selectedIndex].text;
+  fData = dataFilter(tgtYear, area);
   change();
   colorMap();
 }
@@ -418,6 +430,7 @@ function clicked(d) {
   }
   active = d3.select(this);
   className = active.attr("class");
+  area = className;
   d3.selectAll(`.${className}`).classed("active", true);
 
   active = active.classed("active", true);
@@ -436,9 +449,12 @@ function clicked(d) {
       .style("stroke-width", 1 / scale + "px")
       .attr("transform", "translate(" + translate + ")scale(" + scale + ")");
   });
+
+  change();
 }
 
 function reset() {
+  area = "台灣";
   active.classed("active", false);
 
   if(active.node() != null){
@@ -454,6 +470,8 @@ function reset() {
       .style("stroke-width", "1px")
       .attr("transform", "");
   });
+
+  change();
 }
 
 d3.select("#map rect.background").on("click", reset);
