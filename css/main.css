@@ -21,6 +21,12 @@ svg#map {
   float: left;
 }
 
+svg#map rect.background {
+  width: 70vw;
+  height: 100vh;
+  fill: transparent;
+}
+
 svg#map g.city, svg#map g.town {
   fill: #FFF;
   stroke: #633636;
@@ -28,6 +34,10 @@ svg#map g.city, svg#map g.town {
 
 svg#map g.town path {
   display: none;
+}
+
+svg#map g.town.active path {
+  display: block;
 }
 
 svg#map g.active path:hover {

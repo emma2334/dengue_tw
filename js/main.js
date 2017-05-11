@@ -50,7 +50,8 @@ var getData = new Promise(function(resolve) {
             return d.properties["C_Name"];
           },
           d: path
-        });
+        })
+        .on("click", clicked);
 
       svg
         .append("g")
@@ -92,6 +93,9 @@ var getData = new Promise(function(resolve) {
       drawMonthChart();
       drawAgeChart();
       drawAbroadChart();
+
+      // data for zoom map
+      mapSvg = d3.select("#map g.city");
     });
 })();
 
@@ -396,3 +400,40 @@ function changeYear(){
   change();
   colorMap();
 }
+
+// zoom map
+var mapSvg;
+var active = d3.select(null);
+var mapWidth = d3.select("#map").node().getBoundingClientRect().width;
+var mapHeight = d3.select("#map").node().getBoundingClientRect().height;
+
+function clicked(d) {
+  if (active.node() === this) return reset();
+  active.classed("active", false);
+  active = d3.select(this).classed("active", true);
+
+  var bounds = path.bounds(d),
+    dx = bounds[1][0] - bounds[0][0],
+    dy = bounds[1][1] - bounds[0][1],
+    x = (bounds[0][0] + bounds[1][0]) / 2,
+    y = (bounds[0][1] + bounds[1][1]) / 2,
+    scale = .9 / Math.max(dx / mapWidth, dy / mapHeight),
+    translate = [mapWidth / 2 - scale * x, mapHeight / 2 - scale * y];
+
+  mapSvg.transition()
+      .duration(750)
+      .style("stroke-width", 1 / scale + "px")
+      .attr("transform", "translate(" + translate + ")scale(" + scale + ")");
+}
+
+function reset() {
+  active.classed("active", false);
+  active = d3.select(null);
+
+  mapSvg.transition()
+    .duration(750)
+    .style("stroke-width", "1px")
+    .attr("transform", "");
+}
+
+d3.select("#map rect.background").on("click", reset);
