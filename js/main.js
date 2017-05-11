@@ -68,7 +68,8 @@ var getData = new Promise(function(resolve) {
       end = d3.max(rawData, function(d){ return d["發病年份"] });
       fData = yearFilter(end);
       colorMap();
-      monthChart();
+      drawMonthChart();
+      drawAgeChart();
     });
 })();
 
@@ -132,7 +133,7 @@ function colorMap(){
   }
 }
 
-function monthChart(){
+function drawMonthChart(){
   var monthCount = d3.nest()
     .key(function(d){ return d["發病月份"] })
     .rollup(function(d){
@@ -149,7 +150,7 @@ function monthChart(){
   // axis
   var x = d3.scale.linear().range([0, width]);
   var y = d3.scale.linear().range([height, 0]);
-  var xAxis = d3.svg.axis().scale(x).ticks(12).orient("bottom");
+  var xAxis = d3.svg.axis().scale(x).orient("bottom");
   var yAxis = d3.svg.axis().scale(y).orient("left");
 
   x.domain([0, 12]);
@@ -196,4 +197,47 @@ function monthChart(){
       .text(monthCount[i].values)
       .attr("transform", "translate(-5,-10)");
   }
+}
+
+function drawAgeChart(){
+  var ageDomain = ["0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70+"];
+  var ageCount = d3.nest()
+    .key(function(d){ return d["年齡層"] })
+    .key(function(d){ return d["性別"] })
+    .rollup(function(d){
+      var count = 0;
+      for(var i=0; i<d.length; i++){
+        count += +d[i]["確定病例數"];
+      }
+      return count;
+    }).entries(fData);
+
+  var tgt = d3.select("#age svg").node().getBoundingClientRect();
+  var width = tgt.width - 80;
+  var height = tgt.height - 80;
+  // axis
+  var x = d3.scale
+    .ordinal()
+    .domain(ageDomain)
+    .rangeBands([0, width],0,0);
+  var y = d3.scale.linear().range([height, 0]);
+  var xAxis = d3.svg.axis().scale(x).orient("bottom");
+  var yAxis = d3.svg.axis().scale(y).orient("left");
+
+  // x.domain([0, 12]);
+  y.domain([0, d3.max(ageCount, function(d) {
+      return d3.max(d.values, function(c){ return c.values });
+    })])
+    .nice();
+
+  var svg = d3.select("#age svg");
+  svg.append("g")
+    .attr("class", "x axis")
+    .attr("transform", `translate(40,${height+40})`)
+    .call(xAxis);
+
+  svg.append("g")
+    .attr("class", "y axis")
+    .attr("transform", "translate(40,40)")
+    .call(yAxis);
 }
