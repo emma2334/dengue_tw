@@ -172,25 +172,7 @@ function colorMap(){
 }
 
 function drawMonthChart(){
-  var monthCount = d3.nest()
-    .key(function(d){ return d["發病月份"] })
-    .rollup(function(d){
-      var count = 0;
-      for(var i=0; i<d.length; i++){
-        count += +d[i]["確定病例數"];
-      }
-      return count;
-    }).entries(fData);
-
-  // adjust data
-  var tmp = [];
-  for(var i=1; i<13; i++){
-    tmp.push({ key: i, values: 0 });
-  }
-  monthCount.forEach(function(d){
-    tmp[+d.key-1].values = d.values;
-  });
-  monthCount = tmp;
+  var monthCount = monthNest(fData);
 
   var svg = d3.select("#month svg");
   var width = svg.node().getBoundingClientRect().width - 80;
@@ -246,38 +228,32 @@ function drawMonthChart(){
   }
 }
 
+function monthNest(data){
+  var tmp = [];
+  for(var i=1; i<13; i++){
+    tmp.push({ key: i, values: 0 });
+  }
+  if(data.length != 0){
+    var monthCount = d3.nest()
+      .key(function(d){ return d["發病月份"] })
+      .rollup(function(d){
+        var count = 0;
+        for(var i=0; i<d.length; i++){
+          count += +d[i]["確定病例數"];
+        }
+        return count;
+      }).entries(data);
+
+    monthCount.forEach(function(d){
+      tmp[+d.key-1].values = d.values;
+    });
+  }
+  return tmp;
+}
+
 function drawAgeChart(){
   var ageDomain = ["0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70+"];
-  var ageCount = d3.nest()
-    .key(function(d){ return d["年齡層"] })
-    .key(function(d){ return d["性別"] })
-    .rollup(function(d){
-      var count = 0;
-      for(var i=0; i<d.length; i++){
-        count += +d[i]["確定病例數"];
-      }
-      return count;
-    }).entries(fData);
-
-  ageCount.push({
-    key: "0-4",
-    values: [{ key: "M", values: 0 } ,{ key: "F", values: 0 }]
-  });
-
-  // adjust data
-  var tmp = [];
-  for(var i=0; i<(ageCount.length-1); i++){
-    if(Number.isInteger(+ageCount[i].key)){
-      ageCount[i].values.forEach(function(d){
-        if(d.key ==="M") ageCount[ageCount.length-1].values[0].values += +d.values;
-        else ageCount[ageCount.length-1].values[1].values += +d.values;
-      });
-      tmp.push(i);
-    }
-  }
-  while(tmp.length>0){
-    ageCount.splice(tmp.pop(), 1);
-  }
+  var ageCount = ageNest(fData, ageDomain);
 
   var svg = d3.select("#age svg");
   var width = svg.node().getBoundingClientRect().width - 80;
@@ -334,7 +310,65 @@ function drawAgeChart(){
     .call(yAxis);
 }
 
+function ageNest(d, domain){
+  var tmp = [];
+
+  if(d.length == 0){
+    for(var i=0; i<domain.length; i++){
+      tmp.push({ key: domain[i], values: 0 });
+    }
+    return tmp;
+  }else{
+    var ageCount = d3.nest()
+      .key(function(d){ return d["年齡層"] })
+      .key(function(d){ return d["性別"] })
+      .rollup(function(d){
+        var count = 0;
+        for(var i=0; i<d.length; i++){
+          count += +d[i]["確定病例數"];
+        }
+        return count;
+      }).entries(d);
+
+    // adjust data
+    ageCount.push({
+      key: "0-4",
+      values: [{ key: "M", values: 0 } ,{ key: "F", values: 0 }]
+    });
+
+    for(var i=0; i<(ageCount.length-1); i++){
+      if(Number.isInteger(+ageCount[i].key)){
+        ageCount[i].values.forEach(function(d){
+          if(d.key ==="M") ageCount[ageCount.length-1].values[0].values += +d.values;
+          else ageCount[ageCount.length-1].values[1].values += +d.values;
+        });
+        tmp.push(i);
+      }
+    }
+    while(tmp.length>0){
+      ageCount.splice(tmp.pop(), 1);
+    }
+
+    return ageCount;
+  }
+}
+
 function drawAbroadChart(){
+  var svg = d3.select("#abroad svg");
+  var width = svg.node().getBoundingClientRect().width;
+  var height = svg.node().getBoundingClientRect().height;
+
+  if(fData.length == 0){
+    svg.append("text")
+      .attr({
+        transform: `translate(${width/2},${height/2})`,
+        "font-size": 40,
+        "text-anchor": "middle"
+      })
+      .text("無");
+    return ;
+  }
+
   var abroadCount = d3.nest()
     .key(function(d){ return d["是否為境外移入"] })
     .rollup(function(d){
@@ -344,10 +378,6 @@ function drawAbroadChart(){
       }
       return count;
     }).entries(fData);
-
-  var svg = d3.select("#abroad svg");
-  var width = svg.node().getBoundingClientRect().width;
-  var height = svg.node().getBoundingClientRect().height;
 
   // bind
   var pie = d3.layout.pie()
@@ -376,11 +406,6 @@ function drawAbroadChart(){
     }
   });
 
-  var total = 0;
-  abroadCount.forEach(function(d){
-    total += d.values;
-  });
-
   svg.selectAll("g.arc")
     .select("text")
     .attr({
@@ -396,23 +421,32 @@ function drawAbroadChart(){
 
 function change(){
   fData = dataFilter(tgtYear, area);
-  var count = d3.nest()
-    .key(function(d){ return d["確定病名"] })
-    .rollup(function(d){
-      var count = 0;
-      for(var i=0; i<d.length; i++){
-        count += +d[i]["確定病例數"];
-      }
-      return count;
-    }).entries(fData);
-  total = count[0].values;
+
+  total = totalNum(fData);
   d3.select("span.total").html(total);
-  d3.select("span.area").html(area.split(" ").join());
+  d3.select("span.area").html(area.split(" ").join(""));
 
   d3.selectAll(".content svg").html("");
   drawMonthChart();
   drawAgeChart();
   drawAbroadChart();
+}
+
+function totalNum(data){
+  if(fData.length == 0){
+    return 0;
+  }else{
+    var count = d3.nest()
+      .key(function(d){ return d["確定病名"] })
+      .rollup(function(d){
+        var count = 0;
+        for(var i=0; i<d.length; i++){
+          count += +d[i]["確定病例數"];
+        }
+        return count;
+      }).entries(data);
+    return count[0].values;
+  }
 }
 
 function changeYear(){
@@ -452,10 +486,11 @@ function clicked(d) {
     scale = .9 / Math.max(dx / mapWidth, dy / mapHeight),
     translate = [mapWidth / 2 - scale * x, mapHeight / 2 - scale * y];
 
-  mapSvg.forEach(function(d){
+  var strokeWidth = [ 5, 1 ];
+  mapSvg.forEach(function(d, i){
     d.transition()
       .duration(750)
-      .style("stroke-width", 1 / scale + "px")
+      .style("stroke-width", strokeWidth[i] / scale + "px")
       .attr("transform", "translate(" + translate + ")scale(" + scale + ")");
   });
 
