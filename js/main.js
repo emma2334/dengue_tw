@@ -72,7 +72,8 @@ var getData = new Promise(function(resolve) {
       start = d3.min(rawData, function(d){ return +d["發病年份"] });
       end = d3.max(rawData, function(d){ return +d["發病年份"] });
       tgtYear = end;
-      fData = dataFilter(end, area);
+      fData_time = dataFilter(end, area);
+      fData = fData_time;
 
       for(var i=end; i>=start; i--){
         d3.select("#year").append("option").attr({ value: i }).html(i);
@@ -133,7 +134,7 @@ function colorMap(){
         count += +d[i]["確定病例數"];
       }
       return count;
-    }).entries(fData);
+    }).entries(fData_time);
 
   var max = d3.max(cityCount, function(d){ return d.values });
   var scale = d3.scale.linear().domain([1, max]).range([0, 20]);
@@ -154,7 +155,7 @@ function colorMap(){
         count += +d[i]["確定病例數"];
       }
       return count;
-    }).entries(fData);
+    }).entries(fData_time);
 
   max = d3.max(townCount, function(d){
     return d3.max(d.values, function(c){ return c.values });
@@ -452,6 +453,7 @@ function totalNum(data){
 function changeYear(){
   var e = document.getElementById("year")
   tgtYear = e.options[e.selectedIndex].text;
+  fData_time = dataFilter(tgtYear, "台灣");
   change();
   colorMap();
 }
