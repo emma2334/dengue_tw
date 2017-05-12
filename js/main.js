@@ -64,7 +64,8 @@ var getData = new Promise(function(resolve) {
             return `${d.properties["C_Name"]} ${d.properties["T_Name"]}`;
           },
           d: path
-        });
+        })
+        .on("click", clickedTown);
 
       // content
       rawData = dataFeatures;
@@ -109,10 +110,9 @@ function dataFilter(year, area){
       return d["發病年份"] == year && d["縣市"] == area;
     });
   }else{
+    var tmp = area.split(" ");
     return rawData.filter(function(d){
-      var tmp = area.split(" ");
-      area = tmp[1];
-      return d["發病年份"] == year && d["縣市"] == tmp[0] && d["縣市"] == tmp[1];
+      return d["發病年份"] == year && d["縣市"] == tmp[0] && d["鄉鎮"] == tmp[1];
     });
   }
 }
@@ -407,7 +407,7 @@ function change(){
     }).entries(fData);
   total = count[0].values;
   d3.select("span.total").html(total);
-  d3.select("span.area").html(area);
+  d3.select("span.area").html(area.split(" ").join());
 
   d3.selectAll(".content svg").html("");
   drawMonthChart();
@@ -418,7 +418,6 @@ function change(){
 function changeYear(){
   var e = document.getElementById("year")
   tgtYear = e.options[e.selectedIndex].text;
-  fData = dataFilter(tgtYear, area);
   change();
   colorMap();
 }
@@ -485,3 +484,8 @@ function reset() {
 }
 
 d3.select("#map rect.background").on("click", reset);
+
+function clickedTown(){
+  area = d3.select(this).attr("class").replace("active", "");
+  change();
+}
