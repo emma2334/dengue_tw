@@ -51,7 +51,19 @@ var getData = new Promise(function(resolve) {
           },
           d: path
         })
-        .on("click", clicked);
+        .on("click", clicked)
+        .on("mouseover", function(d){
+          d3.select("#tooltip")
+            .html(d.properties["C_Name"])
+            .style({
+              left: `${d3.event.pageX}px`,
+              top: `${d3.event.pageY}px`
+            });
+          d3.select("#tooltip").classed("hidden", false);
+        })
+        .on("mouseout", function(d){
+          d3.select("#tooltip").classed("hidden", true);
+        });;
 
       svg
         .append("g")
@@ -65,7 +77,19 @@ var getData = new Promise(function(resolve) {
           },
           d: path
         })
-        .on("click", clickedTown);
+        .on("click", clickedTown)
+        .on("mouseover", function(d){
+          d3.select("#tooltip")
+            .html(d.properties["T_Name"])
+            .style({
+              left: `${d3.event.pageX}px`,
+              top: `${d3.event.pageY}px`
+            });
+          d3.select("#tooltip").classed("hidden", false);
+        })
+        .on("mouseout", function(d){
+          d3.select("#tooltip").classed("hidden", true);
+        });
 
       // content
       rawData = dataFeatures;
