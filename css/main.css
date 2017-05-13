@@ -9,13 +9,45 @@ body {
 
 /* -----------------
 
+  Navbar
+
+----------------- */
+
+nav {
+  height: 2em;
+  display: flex;
+  align-items: center;
+  background: #4e4e4e;
+  color: white;
+  padding: 0 0.5em;
+}
+
+nav span:hover{
+  color: #B5B5B5;
+  cursor: pointer;
+}
+
+nav span.city:before, nav span.town:before {
+  content: "";
+  border: solid white;
+  border-width: 0 3px 3px 0;
+  display: inline-block;
+  padding: 3px;
+  transform: rotate(-45deg);
+  -webkit-transform: rotate(-45deg);
+  margin: 0 1em;
+}
+
+
+/* -----------------
+
   Map
 
 ----------------- */
 
 svg#map {
   width: 70vw;
-  height: 100vh;
+  height: calc(100vh - 2em);
   display: block;
   background: #CCEEFF;
   float: left;
@@ -23,7 +55,7 @@ svg#map {
 
 svg#map rect.background {
   width: 70vw;
-  height: 100vh;
+  height: calc(100vh - 2em);
   fill: transparent;
 }
 
@@ -54,7 +86,7 @@ svg#map g path:hover {
 
 div.content {
   width: 30vw;
-  height: 100vh;
+  height: calc(100vh - 2em);
   float: right;
   padding: 20px 0;
   overflow: scroll;

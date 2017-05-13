@@ -497,6 +497,12 @@ function clicked(d) {
   });
 
   change();
+
+  // refresh navbar
+  var tmp = area.split(" ");
+  d3.select("nav").html(`
+    <span onclick="reset()">台灣</span>
+    <span class="city" onclick="changeNav()">${area}</span>`);
 }
 
 function reset() {
@@ -518,11 +524,27 @@ function reset() {
   });
 
   change();
+
+  // refresh navbar
+  var tmp = area.split(" ");
+  d3.select("nav").html('<span onclick="reset()">台灣</span>');
 }
 
 d3.select("#map rect.background").on("click", reset);
 
 function clickedTown(){
   area = d3.select(this).attr("class").replace("active", "");
+  change();
+
+  // refresh navbar
+  var tmp = area.split(" ");
+  d3.select("nav").html(`
+    <span onclick="reset()">台灣</span>
+    <span class="city" onclick="changeNav()">${tmp[0]}</span>
+    <span class="town" onclick="clickedTown()">${tmp[1]}</span>`);
+}
+
+function changeNav(){
+  area = d3.select("span.city").html();
   change();
 }
