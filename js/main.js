@@ -184,7 +184,7 @@ function drawMonthChart(){
   var xAxis = d3.svg.axis().scale(x).orient("bottom");
   var yAxis = d3.svg.axis().scale(y).orient("left");
 
-  x.domain([0, 12]);
+  x.domain([1, 12]);
   y.domain([0, d3.max(monthCount, function(d) { return d.values; })]).nice();
 
   svg.append("g")
@@ -209,24 +209,37 @@ function drawMonthChart(){
     .attr("d", line)
     .attr("transform", "translate(40,40)");
 
-  svg.append("g").attr({ class: "point" }).attr("transform", "translate(40,40)");
-  for(var i=0; i<monthCount.length; i++){
-    svg.select("g.point").append("circle")
-      .attr({
-        cx: x(monthCount[i].key),
-        cy: y(monthCount[i].values),
-        r: 4,
-        fill: "red"
-      });
-    svg.select("g.point").append("text")
-      .attr({
-        x: x(monthCount[i].key),
-        y: y(monthCount[i].values),
-        "font-size": 12
-      })
-      .text(monthCount[i].values)
-      .attr("transform", "translate(-5,-10)");
-  }
+  svg.append("g").attr({
+    class: "point",
+    transform: "translate(40,40)"
+  });
+
+  svg.select("g.point").selectAll("g")
+    .data(monthCount)
+    .enter()
+    .append("circle")
+    .attr({
+      cx: function(d){
+        return x(d.key)
+      },
+      cy: function(d){
+        return y(d.values)
+      },
+      r: 4,
+      fill: "red"
+    })
+    .on("mouseover", function(d){
+      d3.select("#tooltip")
+        .html(`${d.values}人`)
+        .style({
+          left: `${d3.event.pageX}px`,
+          top: `${d3.event.pageY}px`
+        });
+      d3.select("#tooltip").classed("hidden", false);
+    })
+    .on("mouseout", function(d){
+      d3.select("#tooltip").classed("hidden", true);
+    });
 }
 
 function monthNest(data){
@@ -264,7 +277,7 @@ function drawAgeChart(){
   var x0 = d3.scale
     .ordinal()
     .domain(ageDomain)
-    .rangeBands([0, width],0.1);
+    .rangeBands([0, width],0.15);
   var x1 = d3.scale
     .ordinal()
     .domain(["M", "F"])
@@ -290,7 +303,19 @@ function drawAgeChart(){
       .attr("y", function(d) { return y(d.values); })
       .attr("width", x1.rangeBand())
       .attr("height", function(d) { return height - y(d.values); })
-      .attr("fill", function(d) { return color[d.key]; });
+      .attr("fill", function(d) { return color[d.key]; })
+      .on("mouseover", function(d){
+        d3.select("#tooltip")
+          .html(`${d.values}人`)
+          .style({
+            left: `${d3.event.pageX}px`,
+            top: `${d3.event.pageY}px`
+          });
+        d3.select("#tooltip").classed("hidden", false);
+      })
+      .on("mouseout", function(d){
+        d3.select("#tooltip").classed("hidden", true);
+      });
 
   // axis
   var xAxis = d3.svg.axis().scale(x0).orient("bottom");
@@ -401,11 +426,22 @@ function drawAbroadChart(){
 
   var color = d3.scale.category20();
   svg.selectAll("g.arc").select("path").attr({
-    d: arc,
-    fill: function(d, i){
-      return color(i);
-    }
-  });
+      d: arc,
+      fill: function(d, i){
+        return color(i);
+      }
+    })
+    .on("mouseover", function(d){
+      d3.select("#tooltip")
+        .html(`${d.value}人`)
+        .style({
+          left: `${d3.event.pageX}px`,
+          top: `${d3.event.pageY}px`
+        });
+      d3.select("#tooltip").classed("hidden", false);
+    }).on("mouseout", function(d){
+      d3.select("#tooltip").classed("hidden", true);
+    });
 
   svg.selectAll("g.arc")
     .select("text")
@@ -451,8 +487,7 @@ function totalNum(data){
 }
 
 function changeYear(){
-  var e = document.getElementById("year")
-  tgtYear = e.options[e.selectedIndex].text;
+  tgtYear = d3.select("#year").property("value");
   fData_time = dataFilter(tgtYear, "台灣");
   change();
   colorMap();
@@ -499,7 +534,6 @@ function clicked(d) {
   change();
 
   // refresh navbar
-  var tmp = area.split(" ");
   d3.select("nav").html(`
     <span onclick="reset()">台灣</span>
     <span class="city" onclick="changeNav()">${area}</span>`);
@@ -546,5 +580,8 @@ function clickedTown(){
 
 function changeNav(){
   area = d3.select("span.city").html();
+  d3.select("nav").html(`
+    <span onclick="reset()">台灣</span>
+    <span class="city" onclick="changeNav()">${area}</span>`);
   change();
 }

@@ -17,7 +17,7 @@ nav {
   height: 2em;
   display: flex;
   align-items: center;
-  background: #4e4e4e;
+  background: #4E4E4E;
   color: white;
   padding: 0 0.5em;
 }
@@ -141,4 +141,21 @@ path.line {
   display: block;
   fill: none;
   stroke: #000;
+}
+
+#tooltip{
+  position: absolute;
+  background: #4E4E4E;
+  color: white;
+  height: auto;
+  padding: 5px;
+  border-radius: 5px;
+}
+
+ #tooltip.hidden{
+  display: none;
+}
+
+#month circle:hover, #age rect:hover, #abroad path:hover {
+  fill:yellow;
 }
