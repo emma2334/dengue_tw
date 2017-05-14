@@ -9,25 +9,27 @@
     <link rel="stylesheet" href="./css/main.css">
 </head>
 <body>
-    <svg id="map">
-        <rect class="background"></rect>
-    </svg>
-    <div class="content">
-        <div id="overview">
-            <select id="year" onchange="changeYear()"></select>
-            <span class="area">台灣</span>共發現&nbsp;<span class="total">0</span>&nbsp;起登革熱感染
-        </div>
-        <div id="month">
-            <h2>發病月份統計</h2>
-            <svg></svg>
-        </div>
-        <div id="age">
-            <h2>年齡層統計</h2>
-            <svg></svg>
-        </div>
-        <div id="abroad">
-            <h2>境外感染比例</h2>
-            <svg></svg>
+    <div class="container">
+        <svg id="map">
+            <rect class="background"></rect>
+        </svg>
+        <div class="content">
+            <div id="overview">
+                <select id="year" onchange="changeYear()"></select>
+                <span class="area">台灣</span>共發現&nbsp;<span class="total">0</span>&nbsp;起登革熱感染
+            </div>
+            <div id="month">
+                <h2>發病月份統計</h2>
+                <svg></svg>
+            </div>
+            <div id="age">
+                <h2>年齡層統計</h2>
+                <svg></svg>
+            </div>
+            <div id="abroad">
+                <h2>境外感染比例</h2>
+                <svg></svg>
+            </div>
         </div>
     </div>
     <nav>

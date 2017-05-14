@@ -6,6 +6,12 @@ body {
   margin: 0;
 }
 
+div.container {
+  width: 100vw;
+  height: calc(100vh - 2em);
+  overflow-y: hidden;
+}
+
 
 /* -----------------
 
@@ -14,12 +20,15 @@ body {
 ----------------- */
 
 nav {
+  width: 100vw;
   height: 2em;
   display: flex;
   align-items: center;
   background: #4E4E4E;
   color: white;
   padding: 0 0.5em;
+  position: fixed;
+  bottom: 0;
 }
 
 nav span:hover{
@@ -89,7 +98,7 @@ div.content {
   height: calc(100vh - 2em);
   float: right;
   padding: 20px 0;
-  overflow: scroll;
+  overflow-y: scroll;
 }
 
 .content #overview {
@@ -151,6 +160,19 @@ path.line {
   padding: 5px;
   border-radius: 5px;
 }
+
+/*#tooltip:before {
+  box-sizing: border-box;
+  display: inline;
+  font-size: 10px;
+  line-height: 1;
+  color: #4E4E4E;
+  content: "\25C0";
+  position: absolute;
+  text-align: center;
+  left: -10px;
+  top: 1em;
+}*/
 
  #tooltip.hidden{
   display: none;

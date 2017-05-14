@@ -219,7 +219,14 @@ function drawMonthChart(){
   svg.append("g")
     .attr("class", "y axis")
     .attr("transform", "translate(40,40)")
-    .call(yAxis);
+    .call(yAxis)
+    .append("text")
+    .attr({
+      x: -10,
+      y: y(y.ticks().pop()) -10,
+      dy: "-0.32em",
+    })
+    .text("人數");
 
   // line
   svg.datum(monthCount);
@@ -357,7 +364,14 @@ function drawAgeChart(){
       class: "axis y",
       transform: "translate(40,40)"
     })
-    .call(yAxis);
+    .call(yAxis)
+    .append("text")
+    .attr({
+      x: -10,
+      y: y(y.ticks().pop()) -10,
+      dy: "-0.32em",
+    })
+    .text("人數");
 }
 
 function ageNest(d, domain){
