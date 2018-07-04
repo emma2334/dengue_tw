@@ -24,8 +24,7 @@ var rawData, fData, fData_time;
 var start, end, total, tgtYear;
 var area = "台灣";
 var getData = new Promise(function(resolve) {
-  csv = d3.dsv(",", "text/csv;charset=big5");
-  csv("https://nidss.cdc.gov.tw/Download/Age_County_Gender_061.csv", function(data){
+  d3.json('./data/Age_County_Gender_061.json', function(data){
     resolve(data);
   });
 });
@@ -63,7 +62,7 @@ var getData = new Promise(function(resolve) {
         })
         .on("mouseout", function(d){
           d3.select("#tooltip").classed("hidden", true);
-        });;
+        });
 
       svg
         .append("g")
@@ -422,7 +421,7 @@ function drawAbroadChart(){
   var width = svg.node().getBoundingClientRect().width;
   var height = svg.node().getBoundingClientRect().height;
 
-  if(fData.length == 0){
+  if(fData && fData.length == 0){
     svg.append("text")
       .attr({
         transform: `translate(${width/2},${height/2})`,
