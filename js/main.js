@@ -25,13 +25,9 @@ var start, end, total, tgtYear;
 var area = "台灣";
 var getData = new Promise(function (resolve) {
   d3.json(
-    'https://od.cdc.gov.tw/eic/Age_County_Gender_061.json',
-    function (error, data) {
-      if (error) {
-        d3.json('./data/Age_County_Gender_061.json', function (data) {
-          resolve(data)
-        })
-      } else resolve(data)
+    'https://emma-proxy.vercel.app/api/eic/Age_County_Gender_061.json',
+    (error, data) => {
+      resolve(data);
     }
   )
 });
