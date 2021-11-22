@@ -30,7 +30,6 @@ var getData = new Promise(function (resolve) {
       var [dataFeatures] = data;
 
       // render svg
-      colorMap();
       drawMonthChart();
       drawAgeChart();
       drawAbroadChart();
@@ -95,6 +94,7 @@ function applyDengueInfo(data){
     })
 
   const dataFilter = setupFilter(data)
+  const latestData = dataFilter(end)
 
   const count = d3.nest()
       .key(d => d["確定病名"])
@@ -104,9 +104,11 @@ function applyDengueInfo(data){
           count += Number(d[i]["確定病例數"])
         })
         return count;
-      }).entries(dataFilter(end));
+      }).entries(latestData);
   total = count[0].values;
   d3.select("span.total").html(total);
+
+  paintMap(latestData)
 }
 
 function setupFilter(rawData){
@@ -122,58 +124,47 @@ function setupFilter(rawData){
   }
 }
 
-function colorMap(){
-  // color scale
-  var color = d3.scale
+function paintMap(data){
+  // Generate color scale
+  const color = d3.scale
     .linear()
     .domain([0,10])
-    .range(["#E4E4E4", "#B50C0C"]);
+    .range(["#E4E4E4", "#B50C0C"])
 
-  // city
-  var cityCount = d3.nest()
-    .key(function(d){ return d["縣市"] })
-    .rollup(function(d){
-      var count = 0;
-      for(var i=0; i<d.length; i++){
-        count += +d[i]["確定病例數"];
-      }
-      return count;
-    }).entries(fData_time);
+  // Group data by city
+  const cityCount = d3.nest()
+    .key(d => d["縣市"])
+    .rollup(d => d.reduce((pre, cur) => pre + Number(cur["確定病例數"]), 0)
+    ).entries(data)
 
-  var max = d3.max(cityCount, function(d){ return d.values });
-  var scale = d3.scale.linear().domain([1, max]).range([0, 20]);
+  const max = d3.max(cityCount, d => d.values);
+  const scale = d3.scale.linear().domain([1, max]).range([0, 20])
 
-  for(var i=0; i<cityCount.length; i++){
-    d3.select("." + cityCount[i].key).attr({
-      fill: color(scale(cityCount[i].values))
-    });
-  }
+  // Paint
+  cityCount.forEach(e => {
+    d3.select("." + e.key).attr({
+      fill: color(scale(e.values))
+    })
+  })
 
-  // town
+  // Group data by town
   var townCount = d3.nest()
-    .key(function(d){ return d["縣市"] })
-    .key(function(d){ return d["鄉鎮"] })
-    .rollup(function(d){
-      var count = 0;
-      for(var i=0; i<d.length; i++){
-        count += +d[i]["確定病例數"];
-      }
-      return count;
-    }).entries(fData_time);
+    .key(d => d["縣市"])
+    .key(d => d["鄉鎮"])
+    .rollup(d =>  d.reduce((pre, cur) => pre + Number(cur["確定病例數"]), 0)
+    ).entries(data);
 
-  max = d3.max(townCount, function(d){
-    return d3.max(d.values, function(c){ return c.values });
-  });
+  max = d3.max(townCount, d =>  d3.max(d.values, c => c.values));
   scale = d3.scale.linear().domain([1, max]).range([0, 20]);
 
-  for(var i=0; i<townCount.length; i++){
-    var tgt = townCount[i].values;
-    for(var j=0; j<tgt.length; j++){
-      d3.select(`.${townCount[i].key}.${tgt[j].key}`).attr({
-        fill: color(scale(tgt[j].values))
+  // Paint
+  townCount.forEach(city => {
+    city.values.forEach(town => {
+      d3.select(`.${city.key}.${town.key}`).attr({
+        fill: color(scale(town.values))
       });
-    }
-  }
+    })
+  })
 }
 
 function drawMonthChart(){
@@ -508,7 +499,7 @@ function changeYear(){
   tgtYear = d3.select("#year").property("value");
   fData_time = dataFilter(tgtYear, "台灣");
   change();
-  colorMap();
+  paintMap();
 }
 
 // zoom map
