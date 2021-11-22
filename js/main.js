@@ -30,7 +30,6 @@ var getData = new Promise(function (resolve) {
       var [dataFeatures] = data;
 
       // render svg
-      drawAgeChart();
       drawAbroadChart();
 
       // data for zoom map
@@ -109,6 +108,7 @@ function applyDengueInfo(data){
 
   paintMap(latestData)
   drawMonthChart(latestData)
+  drawAgeChart(latestData)
 }
 
 function setupFilter(rawData){
@@ -246,52 +246,53 @@ function drawMonthChart(data){
     });
 }
 
-function drawAgeChart(){
-  var ageDomain = ["0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70+"];
-  var ageCount = ageNest(fData, ageDomain);
+function drawAgeChart(data){
+  const ageDomain = ["0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70+"]
 
-  var svg = d3.select("#age svg");
-  var width = svg.node().getBoundingClientRect().width - 80;
-  var height = svg.node().getBoundingClientRect().height - 80;
+  // Sort data by age and gender
+  const ageCount = d3.nest()
+    .key(d => d["年齡層"])
+    .key(d => d["性別"])
+    .rollup(d => d3.sum(d, dd => dd['確定病例數']))
+    .entries(data)
+
+  const svg = d3.select("#age svg");
+  const width = svg.node().getBoundingClientRect().width - 80;
+  const height = svg.node().getBoundingClientRect().height - 80;
 
   // scale
-  var x0 = d3.scale
+  const x0 = d3.scale
     .ordinal()
     .domain(ageDomain)
     .rangeBands([0, width],0.15);
-  var x1 = d3.scale
+  const x1 = d3.scale
     .ordinal()
     .domain(["M", "F"])
     .rangeBands([0, x0.rangeBand()], 0);
-  var y = d3.scale.linear().range([height, 0]);
-  y.domain([0, d3.max(ageCount, function(d) {
-      return d3.max(d.values, function(c){ return c.values });
-    })]).nice();
+  const y = d3.scale.linear().range([height, 0]);
+  y.domain([0, d3.max(ageCount, d => d3.max(d.values, c => c.values))]).nice();
 
   // bar
-  var color = { M: "dodgerblue", F: "deeppink" }
+  const color = { M: "dodgerblue", F: "deeppink" }
   svg.append("g").attr({
     class: "bar",
     transform: "translate(40,40)"
   }).selectAll("g")
     .data(ageCount)
     .enter().append("g")
-      .attr("transform", function(d) { return "translate(" + x0(d.key) + ",0)"; })
+      .attr("transform", d => "translate(" + x0(d.key) + ",0)")
     .selectAll("rect")
-    .data(function(d) { return d.values; })
+    .data(d => d.values)
     .enter().append("rect")
-      .attr("x", function(d) { return x1(d.key); })
-      .attr("y", function(d) { return y(d.values); })
+      .attr("x", d => x1(d.key))
+      .attr("y", d => y(d.values))
       .attr("width", x1.rangeBand())
-      .attr("height", function(d) { return height - y(d.values); })
-      .attr("fill", function(d) { return color[d.key]; })
-      .on("mouseover", function(d){
+      .attr("height", d => height - y(d.values))
+      .attr("fill", d => color[d.key])
+      .on("mouseover", d => {
         d3.select("#tooltip")
           .html(`${d.values}人`)
-          .style({
-            left: `${d3.event.pageX}px`,
-            top: `${d3.event.pageY}px`
-          });
+          .style({ left: `${d3.event.pageX}px`, top: `${d3.event.pageY}px` });
         d3.select("#tooltip").classed("hidden", false);
       })
       .on("mouseout", function(d){
@@ -299,8 +300,8 @@ function drawAgeChart(){
       });
 
   // axis
-  var xAxis = d3.svg.axis().scale(x0).orient("bottom");
-  var yAxis = d3.svg.axis().scale(y).ticks(5).orient("left");
+  const xAxis = d3.svg.axis().scale(x0).orient("bottom");
+  const yAxis = d3.svg.axis().scale(y).ticks(5).orient("left");
 
   svg.append("g")
     .attr({
@@ -316,55 +317,8 @@ function drawAgeChart(){
     })
     .call(yAxis)
     .append("text")
-    .attr({
-      x: -10,
-      y: y(y.ticks().pop()) -10,
-      dy: "-0.32em",
-    })
+    .attr({ x: -10, y: y(y.ticks().pop()) -10, dy: "-0.32em" })
     .text("人數");
-}
-
-function ageNest(d, domain){
-  var tmp = [];
-
-  if(d.length == 0){
-    for(var i=0; i<domain.length; i++){
-      tmp.push({ key: domain[i], values: 0 });
-    }
-    return tmp;
-  }else{
-    var ageCount = d3.nest()
-      .key(function(d){ return d["年齡層"] })
-      .key(function(d){ return d["性別"] })
-      .rollup(function(d){
-        var count = 0;
-        for(var i=0; i<d.length; i++){
-          count += +d[i]["確定病例數"];
-        }
-        return count;
-      }).entries(d);
-
-    // adjust data
-    ageCount.push({
-      key: "0-4",
-      values: [{ key: "M", values: 0 } ,{ key: "F", values: 0 }]
-    });
-
-    for(var i=0; i<(ageCount.length-1); i++){
-      if(Number.isInteger(+ageCount[i].key)){
-        ageCount[i].values.forEach(function(d){
-          if(d.key ==="M") ageCount[ageCount.length-1].values[0].values += +d.values;
-          else ageCount[ageCount.length-1].values[1].values += +d.values;
-        });
-        tmp.push(i);
-      }
-    }
-    while(tmp.length>0){
-      ageCount.splice(tmp.pop(), 1);
-    }
-
-    return ageCount;
-  }
 }
 
 function drawAbroadChart(){
