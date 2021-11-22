@@ -13,29 +13,9 @@ var path = d3.geo.path().projection(projection);
 var rawData, fData, fData_time;
 var start, end, total, tgtYear;
 var area = "台灣";
-var getData = new Promise(function (resolve) {
-  d3.json(
-    'https://emma-proxy.vercel.app/api/eic/Age_County_Gender_061.json',
-    (error, data) => {
-      resolve(data);
-    }
-  )
-});
-
-(function() {
-  Promise.all([
-      getData
-    ])
-    .then(function(data) {
-      var [dataFeatures] = data;
-
-      // render svg
-      drawAbroadChart();
 
       // data for zoom map
       mapSvg = [ d3.select("#map g.city"), d3.select("#map g.town")];
-    });
-})();
 
 function createMap({ city, town }) {
   // Append cities
@@ -109,6 +89,7 @@ function applyDengueInfo(data){
   paintMap(latestData)
   drawMonthChart(latestData)
   drawAgeChart(latestData)
+  drawAbroadChart(latestData)
 }
 
 function setupFilter(rawData){
@@ -321,12 +302,12 @@ function drawAgeChart(data){
     .text("人數");
 }
 
-function drawAbroadChart(){
-  var svg = d3.select("#abroad svg");
-  var width = svg.node().getBoundingClientRect().width;
-  var height = svg.node().getBoundingClientRect().height;
+function drawAbroadChart(data){
+  const svg = d3.select("#abroad svg");
+  const width = svg.node().getBoundingClientRect().width;
+  const height = svg.node().getBoundingClientRect().height;
 
-  if(fData && fData.length == 0){
+  if(data.length == 0){
     svg.append("text")
       .attr({
         transform: `translate(${width/2},${height/2})`,
@@ -337,22 +318,17 @@ function drawAbroadChart(){
     return ;
   }
 
-  var abroadCount = d3.nest()
-    .key(function(d){ return d["是否為境外移入"] })
-    .rollup(function(d){
-      var count = 0;
-      for(var i=0; i<d.length; i++){
-        count += +d[i]["確定病例數"];
-      }
-      return count;
-    }).entries(fData);
+  const abroadCount = d3.nest()
+    .key(d => d["是否為境外移入"])
+    .rollup(d => d3.sum(d, dd => dd['確定病例數']))
+    .entries(data);
 
   // bind
-  var pie = d3.layout.pie()
+  const pie = d3.layout.pie()
     .sort(null)
-    .value(function(d) { return d.values; });
-  var sel = svg.selectAll("g.arc").data(pie(abroadCount));
-  var g_arc = sel.enter()
+    .value(d => d.values);
+  const sel = svg.selectAll("g.arc").data(pie(abroadCount));
+  const g_arc = sel.enter()
     .append("g")
     .attr("class","arc")
     .attr("transform", `translate(${width/2},${height/2})`);
@@ -361,17 +337,15 @@ function drawAbroadChart(){
   sel.exit().remove();;
 
   // render
-  var radius = d3.min([width, height]);
-  var arc = d3.svg.arc()
+  const radius = d3.min([width, height]);
+  const arc = d3.svg.arc()
     .outerRadius(radius/2-20)
     .innerRadius(0);
 
-  var color = d3.scale.category20();
+  const color = d3.scale.category20();
   svg.selectAll("g.arc").select("path").attr({
       d: arc,
-      fill: function(d, i){
-        return color(i);
-      }
+      fill: (d, i) => color(i)
     })
     .on("mouseover", function(d){
       d3.select("#tooltip")
@@ -388,14 +362,10 @@ function drawAbroadChart(){
   svg.selectAll("g.arc")
     .select("text")
     .attr({
-      transform: function(d){
-        return `translate(${arc.centroid(d)})`;
-      },
+      transform: d => `translate(${arc.centroid(d)})`,
       "text-anchor": "middle"
     })
-    .text(function(d) {
-      return `${d.data.key} ${((d.data.values/total)*100).toFixed(1)}%`;
-    });
+    .text(d => `${d.data.key} ${((d.data.values/total)*100).toFixed(1)}%`);
 }
 
 function change(){
