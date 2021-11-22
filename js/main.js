@@ -1,3 +1,5 @@
+export { createMap }
+
 // set up map data
 var map = d3.select("svg#map").node().getBoundingClientRect();
 var svg = d3.select("svg#map").attr('viewBox', `0 0 ${map.width} ${map.height}`);
@@ -6,18 +8,6 @@ var projection = d3.geo.mercator()
   .scale(map.height/0.01/8.5)
   .translate([map.width / 2, map.height / 2]);
 var path = d3.geo.path().projection(projection);
-
-var getCity = new Promise(function(resolve) {
-  d3.json("./data/city.json", function(topodata) {
-    resolve(topojson.feature(topodata, topodata.objects["city"]).features);
-  });
-});
-
-var getTown = new Promise(function(resolve) {
-  d3.json("./data/town.json", function(topodata) {
-    resolve(topojson.feature(topodata, topodata.objects["town"]).features);
-  });
-});
 
 // set up dengue data
 var rawData, fData, fData_time;
@@ -34,64 +24,11 @@ var getData = new Promise(function (resolve) {
 
 (function() {
   Promise.all([
-      getCity,
-      getTown,
       getData
     ])
     .then(function(data) {
-      var [cityFeatures, townFeatures, dataFeatures] = data;
-
-      // map
-      svg
-        .append("g")
-        .attr("class", "city active")
-        .selectAll("path")
-        .data(cityFeatures).enter()
-        .append("path").attr({
-          class: function(d) {
-            return d.properties["C_Name"];
-          },
-          d: path
-        })
-        .on("click", clicked)
-        .on("mouseover", function(d){
-          d3.select("#tooltip")
-            .html(d.properties["C_Name"])
-            .style({
-              left: `${d3.event.pageX}px`,
-              top: `${d3.event.pageY}px`
-            });
-          d3.select("#tooltip").classed("hidden", false);
-        })
-        .on("mouseout", function(d){
-          d3.select("#tooltip").classed("hidden", true);
-        });
-
-      svg
-        .append("g")
-        .attr("class", "town")
-        .selectAll("path")
-        .data(townFeatures).enter()
-        .append("path")
-        .attr({
-          class: function(d) {
-            return `${d.properties["C_Name"]} ${d.properties["T_Name"]}`;
-          },
-          d: path
-        })
-        .on("click", clickedTown)
-        .on("mouseover", function(d){
-          d3.select("#tooltip")
-            .html(d.properties["T_Name"])
-            .style({
-              left: `${d3.event.pageX}px`,
-              top: `${d3.event.pageY}px`
-            });
-          d3.select("#tooltip").classed("hidden", false);
-        })
-        .on("mouseout", function(d){
-          d3.select("#tooltip").classed("hidden", true);
-        });
+      var [dataFeatures] = data;
+      
 
       // content
       rawData = dataFeatures;
@@ -126,6 +63,51 @@ var getData = new Promise(function (resolve) {
       mapSvg = [ d3.select("#map g.city"), d3.select("#map g.town")];
     });
 })();
+
+function createMap({ city, town }) {
+  // Append cities
+  svg
+    .append('g')
+    .attr('class', 'city active')
+    .selectAll('path')
+    .data(city)
+    .enter()
+    .append('path')
+    .attr({ class: d => d.properties['C_Name'], d: path })
+    .on('click', clicked)
+    .on('mouseover', d => {
+      d3.select('#tooltip')
+        .html(d.properties['C_Name'])
+        .style({ left: `${d3.event.pageX}px`, top: `${d3.event.pageY}px` })
+      d3.select('#tooltip').classed('hidden', false)
+    })
+    .on('mouseout', d => {
+      d3.select('#tooltip').classed('hidden', true)
+    })
+
+  // Append towns
+  svg
+    .append('g')
+    .attr('class', 'town')
+    .selectAll('path')
+    .data(town)
+    .enter()
+    .append('path')
+    .attr({
+      class: d => `${d.properties['C_Name']} ${d.properties['T_Name']}`,
+      d: path,
+    })
+    .on('click', clickedTown)
+    .on('mouseover', d => {
+      d3.select('#tooltip')
+        .html(d.properties['T_Name'])
+        .style({ left: `${d3.event.pageX}px`, top: `${d3.event.pageY}px` })
+      d3.select('#tooltip').classed('hidden', false)
+    })
+    .on('mouseout', function (d) {
+      d3.select('#tooltip').classed('hidden', true)
+    })
+}
 
 function dataFilter(year, area){
   if(area === "台灣"){
