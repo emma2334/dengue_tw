@@ -1,20 +1,19 @@
-import { createMap } from './main.js'
+import { createMap, applyDengueInfo } from './main.js'
 ;(function () {
-  const getCity = new Promise(resolve => {
-    d3.json('./data/city.json', topodata => {
-      resolve(topojson.feature(topodata, topodata.objects['city']).features)
-    })
+  Promise.all(
+    ['city', 'town'].map(
+      e =>
+        new Promise(resolve => {
+          d3.json(`./data/${e}.json`, data => {
+            resolve(topojson.feature(data, data.objects[e]).features)
+          })
+        })
+    )
+  ).then(function ([city, town]) {
+    createMap({ city, town })
   })
 
-  const getTown = new Promise(resolve => {
-    d3.json('./data/town.json', topodata => {
-      resolve(topojson.feature(topodata, topodata.objects['town']).features)
-    })
-  })
-  Promise.all([getCity, getTown]).then(function (data) {
-    var [cities, towns] = data
-
-    // map
-    createMap({ city: cities, town: towns })
+  d3.json('./data/Age_County_Gender_061.json', (error, data) => {
+    applyDengueInfo(data)
   })
 })()

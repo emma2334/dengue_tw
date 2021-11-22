@@ -1,4 +1,4 @@
-export { createMap }
+export { createMap, applyDengueInfo }
 
 // set up map data
 var map = d3.select("svg#map").node().getBoundingClientRect();
@@ -28,30 +28,6 @@ var getData = new Promise(function (resolve) {
     ])
     .then(function(data) {
       var [dataFeatures] = data;
-      
-
-      // content
-      rawData = dataFeatures;
-      start = d3.min(rawData, function(d){ return +d["發病年份"] });
-      end = d3.max(rawData, function(d){ return +d["發病年份"] });
-      tgtYear = end;
-      fData_time = dataFilter(end, area);
-      fData = fData_time;
-
-      for(var i=end; i>=start; i--){
-        d3.select("#year").append("option").attr({ value: i }).html(i);
-      }
-      var count = d3.nest()
-        .key(function(d){ return d["確定病名"] })
-        .rollup(function(d){
-          var count = 0;
-          for(var i=0; i<d.length; i++){
-            count += +d[i]["確定病例數"];
-          }
-          return count;
-        }).entries(fData);
-        total = count[0].values;
-        d3.select("span.total").html(total);
 
       // render svg
       colorMap();
@@ -109,20 +85,40 @@ function createMap({ city, town }) {
     })
 }
 
-function dataFilter(year, area){
-  if(area === "台灣"){
-    return rawData.filter(function(d){
-      return d["發病年份"] == year;
-    });
-  }else if(area.split(" ").length==1){
-    return rawData.filter(function(d){
-      return d["發病年份"] == year && d["縣市"] == area;
-    });
-  }else{
-    var tmp = area.split(" ");
-    return rawData.filter(function(d){
-      return d["發病年份"] == year && d["縣市"] == tmp[0] && d["鄉鎮"] == tmp[1];
-    });
+function applyDengueInfo(data){
+  const start = d3.min(data, d => Number(d['發病年份']))
+  const end = d3.max(data, d => Number(d['發病年份']))
+  Array(end - start + 1)
+    .fill()
+    .forEach((e, i) => {
+      d3.select('#year').insert('option').attr({ value: end - i }).html(end - i)
+    })
+
+  const dataFilter = setupFilter(data)
+
+  const count = d3.nest()
+      .key(d => d["確定病名"])
+      .rollup(d => {
+        var count = 0;
+        d.forEach((e, i) => {
+          count += Number(d[i]["確定病例數"])
+        })
+        return count;
+      }).entries(dataFilter(end));
+  total = count[0].values;
+  d3.select("span.total").html(total);
+}
+
+function setupFilter(rawData){
+  return (year, area = '台灣') => {
+    if(area === "台灣"){
+      return rawData.filter(d => d["發病年份"] == year)
+    } else if(area.split(" ").length === 1){
+      return rawData.filter(d => d["發病年份"] == year && d["縣市"] == area)
+    } else {
+      const tmp = area.split(" ");
+      return rawData.filter(d => d["發病年份"] == year && d["縣市"] == tmp[0] && d["鄉鎮"] == tmp[1])
+    }
   }
 }
 
