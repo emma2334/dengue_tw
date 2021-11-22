@@ -1,3 +1,4 @@
+import { rawData } from './index.js'
 export { createMap, applyDengueInfo }
 
 // set up map data
@@ -9,13 +10,8 @@ var projection = d3.geo.mercator()
   .translate([map.width / 2, map.height / 2]);
 var path = d3.geo.path().projection(projection);
 
-// set up dengue data
-var rawData, fData, fData_time;
-var start, end, total, tgtYear;
-var area = "台灣";
-
-      // data for zoom map
-      mapSvg = [ d3.select("#map g.city"), d3.select("#map g.town")];
+// data for zoom map
+mapSvg = [ d3.select("#map g.city"), d3.select("#map g.town")];
 
 function createMap({ city, town }) {
   // Append cities
@@ -71,19 +67,8 @@ function applyDengueInfo(data){
       d3.select('#year').insert('option').attr({ value: end - i }).html(end - i)
     })
 
-  const dataFilter = setupFilter(data)
   const latestData = dataFilter(end)
-
-  const count = d3.nest()
-      .key(d => d["確定病名"])
-      .rollup(d => {
-        var count = 0;
-        d.forEach((e, i) => {
-          count += Number(d[i]["確定病例數"])
-        })
-        return count;
-      }).entries(latestData);
-  total = count[0].values;
+  const total = d3.nest().rollup(d => d3.sum(d, dd => dd['確定病例數'])).entries(latestData);
   d3.select("span.total").html(total);
 
   paintMap(latestData)
@@ -92,16 +77,14 @@ function applyDengueInfo(data){
   drawAbroadChart(latestData)
 }
 
-function setupFilter(rawData){
-  return (year, area = '台灣') => {
-    if(area === "台灣"){
-      return rawData.filter(d => d["發病年份"] == year)
-    } else if(area.split(" ").length === 1){
-      return rawData.filter(d => d["發病年份"] == year && d["縣市"] == area)
-    } else {
-      const tmp = area.split(" ");
-      return rawData.filter(d => d["發病年份"] == year && d["縣市"] == tmp[0] && d["鄉鎮"] == tmp[1])
-    }
+function dataFilter(year, area = '台灣') {
+  if(area === "台灣"){
+    return rawData.filter(d => d["發病年份"] == year)
+  } else if(area.split(" ").length === 1){
+    return rawData.filter(d => d["發病年份"] == year && d["縣市"] == area)
+  } else {
+    const tmp = area.split(" ");
+    return rawData.filter(d => d["發病年份"] == year && d["縣市"] == tmp[0] && d["鄉鎮"] == tmp[1])
   }
 }
 
@@ -368,34 +351,17 @@ function drawAbroadChart(data){
     .text(d => `${d.data.key} ${((d.data.values/total)*100).toFixed(1)}%`);
 }
 
-function change(){
-  fData = dataFilter(tgtYear, area);
+function change(year, area = '台灣'){
+  const data = dataFilter(year, area)
+  const total = d3.nest().rollup(d => d3.sum(d, dd => dd['確定病例數'])).entries(data)
 
-  total = totalNum(fData);
-  d3.select("span.total").html(total);
-  d3.select("span.area").html(area.split(" ").join(""));
+  d3.select("span.total").html(total)
+  d3.select("span.area").html(area.replace(/ /g, ''))
 
   d3.selectAll(".content svg").html("");
-  drawMonthChart();
-  drawAgeChart();
-  drawAbroadChart();
-}
-
-function totalNum(data){
-  if(fData.length == 0){
-    return 0;
-  }else{
-    var count = d3.nest()
-      .key(function(d){ return d["確定病名"] })
-      .rollup(function(d){
-        var count = 0;
-        for(var i=0; i<d.length; i++){
-          count += +d[i]["確定病例數"];
-        }
-        return count;
-      }).entries(data);
-    return count[0].values;
-  }
+  drawMonthChart(data)
+  drawAgeChart(data)
+  drawAbroadChart(data)
 }
 
 function changeYear(){

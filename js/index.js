@@ -1,4 +1,5 @@
 import { createMap, applyDengueInfo } from './main.js'
+let rawData
 ;(function () {
   Promise.all(
     ['city', 'town'].map(
@@ -14,6 +15,9 @@ import { createMap, applyDengueInfo } from './main.js'
   })
 
   d3.json('./data/Age_County_Gender_061.json', (error, data) => {
+    rawData = data
     applyDengueInfo(data)
   })
 })()
+
+export { rawData }
