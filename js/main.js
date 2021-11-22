@@ -30,7 +30,6 @@ var getData = new Promise(function (resolve) {
       var [dataFeatures] = data;
 
       // render svg
-      drawMonthChart();
       drawAgeChart();
       drawAbroadChart();
 
@@ -109,6 +108,7 @@ function applyDengueInfo(data){
   d3.select("span.total").html(total);
 
   paintMap(latestData)
+  drawMonthChart(latestData)
 }
 
 function setupFilter(rawData){
@@ -134,8 +134,8 @@ function paintMap(data){
   // Group data by city
   const cityCount = d3.nest()
     .key(d => d["縣市"])
-    .rollup(d => d.reduce((pre, cur) => pre + Number(cur["確定病例數"]), 0)
-    ).entries(data)
+    .rollup(d => d3.sum(d, dd => dd['確定病例數']))
+    .entries(data)
 
   const max = d3.max(cityCount, d => d.values);
   const scale = d3.scale.linear().domain([1, max]).range([0, 20])
@@ -148,14 +148,11 @@ function paintMap(data){
   })
 
   // Group data by town
-  var townCount = d3.nest()
+  const townCount = d3.nest()
     .key(d => d["縣市"])
     .key(d => d["鄉鎮"])
-    .rollup(d =>  d.reduce((pre, cur) => pre + Number(cur["確定病例數"]), 0)
-    ).entries(data);
-
-  max = d3.max(townCount, d =>  d3.max(d.values, c => c.values));
-  scale = d3.scale.linear().domain([1, max]).range([0, 20]);
+    .rollup(d => d3.sum(d, dd => dd['確定病例數']))
+    .entries(data)
 
   // Paint
   townCount.forEach(city => {
@@ -167,25 +164,34 @@ function paintMap(data){
   })
 }
 
-function drawMonthChart(){
-  var monthCount = monthNest(fData);
+function drawMonthChart(data){
+  // Sort data and make sure months without data have default values
+  const monthCount = Array(12).fill().map((e, i) => ({ key: i + 1, values: 0 }))
+  d3.nest()
+    .key(d => d["發病月份"])
+    .rollup(d => d3.sum(d, dd => dd['確定病例數']))
+    .entries(data)
+    .forEach(e => {
+      monthCount[e.key - 1].values = e.values
+    })
 
-  var svg = d3.select("#month svg");
-  var width = svg.node().getBoundingClientRect().width - 80;
-  var height = svg.node().getBoundingClientRect().height - 80;
+  // Draw chart
+  const svg = d3.select("#month svg")
+  const width = svg.node().getBoundingClientRect().width - 80
+  const height = svg.node().getBoundingClientRect().height - 80
   // axis
-  var x = d3.scale.linear().range([0, width]);
-  var y = d3.scale.linear().range([height, 0]);
-  var xAxis = d3.svg.axis().scale(x).orient("bottom");
-  var yAxis = d3.svg.axis().scale(y).orient("left");
+  const x = d3.scale.linear().range([0, width])
+  const y = d3.scale.linear().range([height, 0])
+  const xAxis = d3.svg.axis().scale(x).orient("bottom")
+  const yAxis = d3.svg.axis().scale(y).orient("left")
 
-  x.domain([1, 12]);
-  y.domain([0, d3.max(monthCount, function(d) { return d.values; })]).nice();
+  x.domain([1, 12])
+  y.domain([0, d3.max(monthCount, d => d.values)]).nice()
 
   svg.append("g")
     .attr("class", "x axis")
     .attr("transform", `translate(40,${height+40})`)
-    .call(xAxis);
+    .call(xAxis)
 
   svg.append("g")
     .attr("class", "y axis")
@@ -197,74 +203,47 @@ function drawMonthChart(){
       y: y(y.ticks().pop()) -10,
       dy: "-0.32em",
     })
-    .text("人數");
+    .text("人數")
 
   // line
   svg.datum(monthCount);
-  var line = d3.svg.line()
+  const line = d3.svg.line()
     .interpolate("linear")
-    .x(function(d) { return x(d.key); })
-    .y(function(d) { return y(d.values); });
+    .x(d => x(d.key))
+    .y(d => y(d.values))
 
   svg.append("path")
     .attr("class", "line")
     .attr("d", line)
-    .attr("transform", "translate(40,40)");
+    .attr("transform", "translate(40,40)")
 
   svg.append("g").attr({
     class: "point",
     transform: "translate(40,40)"
-  });
+  })
 
   svg.select("g.point").selectAll("g")
     .data(monthCount)
     .enter()
     .append("circle")
     .attr({
-      cx: function(d){
-        return x(d.key)
-      },
-      cy: function(d){
-        return y(d.values)
-      },
+      cx: d => x(d.key),
+      cy: d => y(d.values),
       r: 4,
       fill: "red"
     })
-    .on("mouseover", function(d){
+    .on("mouseover", d => {
       d3.select("#tooltip")
         .html(`${d.values}人`)
         .style({
           left: `${d3.event.pageX}px`,
           top: `${d3.event.pageY}px`
-        });
-      d3.select("#tooltip").classed("hidden", false);
+        })
+      d3.select("#tooltip").classed("hidden", false)
     })
-    .on("mouseout", function(d){
-      d3.select("#tooltip").classed("hidden", true);
+    .on("mouseout", d => {
+      d3.select("#tooltip").classed("hidden", true)
     });
-}
-
-function monthNest(data){
-  var tmp = [];
-  for(var i=1; i<13; i++){
-    tmp.push({ key: i, values: 0 });
-  }
-  if(data.length != 0){
-    var monthCount = d3.nest()
-      .key(function(d){ return d["發病月份"] })
-      .rollup(function(d){
-        var count = 0;
-        for(var i=0; i<d.length; i++){
-          count += +d[i]["確定病例數"];
-        }
-        return count;
-      }).entries(data);
-
-    monthCount.forEach(function(d){
-      tmp[+d.key-1].values = d.values;
-    });
-  }
-  return tmp;
 }
 
 function drawAgeChart(){
