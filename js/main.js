@@ -40,6 +40,7 @@ var getData = new Promise(function (resolve) {
     ])
     .then(function(data) {
       var [cityFeatures, townFeatures, dataFeatures] = data;
+      $('.mask').fadeOut()
 
       // map
       svg
