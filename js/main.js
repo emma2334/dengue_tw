@@ -219,6 +219,19 @@ function drawAgeChart(data){
     .key(d => d["性別"])
     .rollup(d => d3.sum(d, dd => dd['確定病例數']))
     .entries(data)
+    .reduce((pre, cur) => {
+      if(cur.key < 5) {
+        cur.values.forEach(e => {
+          pre[0].values[e.key === 'M' ? 0 : 1].values += e.values
+        })
+      } else {
+        pre.push(cur)
+      }
+      return pre
+    }, [{
+      key: "0-4",
+      values: [{ key: "M", values: 0 } ,{ key: "F", values: 0 }]
+    }])
 
   const svg = d3.select("#age svg");
   const width = svg.node().getBoundingClientRect().width - 80;
