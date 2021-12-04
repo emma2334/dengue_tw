@@ -1,6 +1,7 @@
-import { createMap, applyDengueInfo } from './main.js'
-let rawData
+import createMap from './main.js'
+
 ;(function () {
+  const map = new createMap()
   Promise.all(
     ['city', 'town'].map(
       e =>
@@ -11,13 +12,15 @@ let rawData
         })
     )
   ).then(function ([city, town]) {
-    createMap({ city, town })
+    map.draw({ city, town })
   })
 
   d3.json('./data/Age_County_Gender_061.json', (error, data) => {
-    rawData = data
-    applyDengueInfo(data)
-  })
-})()
+      map.applyDengueInfo(data)
+    }
+  )
 
-export { rawData }
+  document.getElementById('year').onchange = (e) => {
+    map.changeYear(e.target.value)
+  }
+})()

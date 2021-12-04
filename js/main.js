@@ -1,28 +1,33 @@
-import { rawData } from './index.js'
-export { createMap, applyDengueInfo }
+export default function createMap() {
+  // set up map data
+  this.map = d3.select("svg#map").node().getBoundingClientRect();
+  this.svg = d3.select("svg#map").attr('viewBox', `0 0 ${this.map.width} ${this.map.height}`);
+  const projection = d3.geo.mercator()
+    .center([121,24])
+    .scale(this.map.height/0.01/8.5)
+    .translate([this.map.width / 2, this.map.height / 2]);
+  this.path = d3.geo.path().projection(projection);
 
-// set up map data
-var map = d3.select("svg#map").node().getBoundingClientRect();
-var svg = d3.select("svg#map").attr('viewBox', `0 0 ${map.width} ${map.height}`);
-var projection = d3.geo.mercator()
-  .center([121,24])
-  .scale(map.height/0.01/8.5)
-  .translate([map.width / 2, map.height / 2]);
-var path = d3.geo.path().projection(projection);
+  // data for zoom map
+  this.mapSvg = [ d3.select("#map g.city"), d3.select("#map g.town")];
 
-// data for zoom map
-mapSvg = [ d3.select("#map g.city"), d3.select("#map g.town")];
+  this.draw = draw
+  this.applyDengueInfo = applyDengueInfo
+  this.dataFilter = dataFilter
+  this.change = change
+  this.changeYear = changeYear
+}
 
-function createMap({ city, town }) {
+function draw({ city, town }) {
   // Append cities
-  svg
+  this.svg
     .append('g')
     .attr('class', 'city active')
     .selectAll('path')
     .data(city)
     .enter()
     .append('path')
-    .attr({ class: d => d.properties['C_Name'], d: path })
+    .attr({ class: d => d.properties['C_Name'], d: this.path })
     .on('click', clicked)
     .on('mouseover', d => {
       d3.select('#tooltip')
@@ -35,7 +40,7 @@ function createMap({ city, town }) {
     })
 
   // Append towns
-  svg
+  this.svg
     .append('g')
     .attr('class', 'town')
     .selectAll('path')
@@ -44,7 +49,7 @@ function createMap({ city, town }) {
     .append('path')
     .attr({
       class: d => `${d.properties['C_Name']} ${d.properties['T_Name']}`,
-      d: path,
+      d: this.path,
     })
     .on('click', clickedTown)
     .on('mouseover', d => {
@@ -59,6 +64,8 @@ function createMap({ city, town }) {
 }
 
 function applyDengueInfo(data){
+  this.rawData = data
+
   const start = d3.min(data, d => Number(d['發病年份']))
   const end = d3.max(data, d => Number(d['發病年份']))
   Array(end - start + 1)
@@ -67,7 +74,7 @@ function applyDengueInfo(data){
       d3.select('#year').insert('option').attr({ value: end - i }).html(end - i)
     })
 
-  const latestData = dataFilter(end)
+  const latestData = this.dataFilter(end)
   const total = d3.nest().rollup(d => d3.sum(d, dd => dd['確定病例數'])).entries(latestData);
   d3.select("span.total").html(total);
 
@@ -79,12 +86,12 @@ function applyDengueInfo(data){
 
 function dataFilter(year, area = '台灣') {
   if(area === "台灣"){
-    return rawData.filter(d => d["發病年份"] == year)
+    return this.rawData.filter(d => d["發病年份"] == year)
   } else if(area.split(" ").length === 1){
-    return rawData.filter(d => d["發病年份"] == year && d["縣市"] == area)
+    return this.rawData.filter(d => d["發病年份"] == year && d["縣市"] == area)
   } else {
     const tmp = area.split(" ");
-    return rawData.filter(d => d["發病年份"] == year && d["縣市"] == tmp[0] && d["鄉鎮"] == tmp[1])
+    return this.rawData.filter(d => d["發病年份"] == year && d["縣市"] == tmp[0] && d["鄉鎮"] == tmp[1])
   }
 }
 
@@ -355,6 +362,7 @@ function drawAbroadChart(data){
       d3.select("#tooltip").classed("hidden", true);
     });
 
+  const total = d3.nest().rollup(d => d3.sum(d, dd => dd['確定病例數'])).entries(data)
   svg.selectAll("g.arc")
     .select("text")
     .attr({
@@ -365,7 +373,7 @@ function drawAbroadChart(data){
 }
 
 function change(year, area = '台灣'){
-  const data = dataFilter(year, area)
+  const data = this.dataFilter(year, area)
   const total = d3.nest().rollup(d => d3.sum(d, dd => dd['確定病例數'])).entries(data)
 
   d3.select("span.total").html(total)
@@ -377,11 +385,9 @@ function change(year, area = '台灣'){
   drawAbroadChart(data)
 }
 
-function changeYear(){
-  tgtYear = d3.select("#year").property("value");
-  fData_time = dataFilter(tgtYear, "台灣");
-  change();
-  paintMap();
+function changeYear(year){
+  this.change(year)
+  paintMap(this.dataFilter(year))
 }
 
 // zoom map
