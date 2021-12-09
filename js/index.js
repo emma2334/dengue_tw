@@ -16,9 +16,8 @@ import createMap from './main.js'
   })
 
   d3.json('./data/Age_County_Gender_061.json', (error, data) => {
-      map.applyDengueInfo(data)
-    }
-  )
+    map.applyDengueInfo(data)
+  })
 
   document.getElementById('year').onchange = e => {
     map.changeYear(e.target.value)
