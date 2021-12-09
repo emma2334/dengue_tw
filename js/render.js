@@ -25,7 +25,7 @@ function paintMap(data) {
   const townCount = d3
     .nest()
     .key(d => d['縣市'])
-    .key(d => d['鄉鎮'])
+    .key(d => d['鄉鎮'].replace(/\s/g, ''))
     .rollup(d => d3.sum(d, dd => dd['確定病例數']))
     .entries(data)
 

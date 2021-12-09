@@ -75,7 +75,6 @@ createMap.prototype.applyDengueInfo = function (data) {
 
   const start = d3.min(data, d => Number(d['發病年份']))
   const end = d3.max(data, d => Number(d['發病年份']))
-  this.year = end.toString()
 
   // Insert year options
   for (let i = end - start; i >= 0; i--) {
@@ -85,52 +84,50 @@ createMap.prototype.applyDengueInfo = function (data) {
       .html(start + i)
   }
 
-  const latestData = this.dataFilter(end)
-  const total = d3
-    .nest()
-    .rollup(d => d3.sum(d, dd => dd['確定病例數']))
-    .entries(latestData)
-  d3.select('span.total').html(total)
-
-  paintMap(latestData)
-  drawMonthChart(latestData)
-  drawAgeChart(latestData)
-  drawAbroadChart(latestData)
+  this.update({ year: end.toString() })
 }
 
 createMap.prototype.dataFilter = function (year, area = '台灣') {
+  const [city, town] = area.split(' ')
   if (area === '台灣') {
-    return this.rawData.filter(d => d['發病年份'] == year)
-  } else if (area.split(' ').length === 1) {
-    return this.rawData.filter(d => d['發病年份'] == year && d['縣市'] == area)
-  } else {
-    const tmp = area.split(' ')
+    return this.rawData.filter(d => d['發病年份'] === year)
+  } else if (!town) {
     return this.rawData.filter(
-      d => d['發病年份'] == year && d['縣市'] == tmp[0] && d['鄉鎮'] == tmp[1]
+      d => d['發病年份'] === year && d['縣市'] === city
+    )
+    console.log(city)
+  } else {
+    return this.rawData.filter(
+      d =>
+        d['發病年份'] === year &&
+        d['縣市'] === city &&
+        d['鄉鎮'].replace(/\s/g, '') === town
     )
   }
 }
 
-createMap.prototype.change = function () {
-  const data = this.dataFilter(this.year, this.area)
+createMap.prototype.update = function ({ area = this.area, year = this.year }) {
+  const data = this.dataFilter(year, area)
   const total = d3
     .nest()
     .rollup(d => d3.sum(d, dd => dd['確定病例數']))
     .entries(data)
 
-  d3.select('span.total').html(total)
-  d3.select('span.area').html(this.area.replace(/ /g, ''))
+  // Update overview
+  d3.select('#overview .total').html(total)
+  d3.select('#overview .area').html(area.replace(/ /g, ''))
 
+  // Update charts
   d3.selectAll('.content svg').html('')
   drawMonthChart(data)
   drawAgeChart(data)
   drawAbroadChart(data)
-}
 
-createMap.prototype.changeYear = function (year) {
+  // Repaint map if year if change
+  if (this.year !== year) paintMap(this.dataFilter(year))
+
+  this.area = area
   this.year = year
-  this.change()
-  paintMap(this.dataFilter(year))
 }
 
 function clickCity(d) {
@@ -138,8 +135,8 @@ function clickCity(d) {
   d3.selectAll('.active').classed('active', false)
 
   // Show town map
-  this.area = d.properties.C_Name
-  d3.selectAll(`.${this.area}`).classed('active', true)
+  const area = d.properties.C_Name
+  d3.selectAll(`.${area}`).classed('active', true)
 
   const bounds = this.path.bounds(d), // Map boundaries
     dx = bounds[1][0] - bounds[0][0], // Width
@@ -157,12 +154,12 @@ function clickCity(d) {
       .attr('transform', 'translate(' + translate + ')scale(' + scale + ')')
   }
 
-  this.change()
+  this.update({ area })
 
   // refresh navbar
   d3.select('nav').html(`
     <span onclick="reset()">台灣</span>
-    <span class="city" onclick="changeNav()">${this.area}</span>`)
+    <span class="city" onclick="changeNav()">${area}</span>`)
 }
 
 createMap.prototype.reset = function () {
@@ -176,7 +173,7 @@ createMap.prototype.reset = function () {
       .attr('transform', '')
   }
 
-  this.change()
+  this.update({ area: '台灣' })
 
   // refresh navbar
   d3.select('nav').html('<span onclick="reset()">台灣</span>')
@@ -184,8 +181,7 @@ createMap.prototype.reset = function () {
 
 function clickedTown(d) {
   const { C_Name: city, T_Name: town } = d.properties
-  this.area = `${city} ${town}`
-  this.change()
+  this.update({ area: `${city} ${town}` })
 
   // refresh navbar
   d3.select('nav').html(`
@@ -195,9 +191,9 @@ function clickedTown(d) {
 }
 
 function changeNav() {
-  area = d3.select('span.city').html()
+  const area = d3.select('span.city').html()
   d3.select('nav').html(`
     <span onclick="reset()">台灣</span>
     <span class="city" onclick="changeNav()">${area}</span>`)
-  change()
+  this.update({ area })
 }
