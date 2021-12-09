@@ -25,14 +25,13 @@ export default function createMap() {
 }
 
 createMap.prototype.draw = function ({ city, town }) {
-  const { path, mapSvg } = this
   // Append cities
   d3.select('svg#map g.city')
     .selectAll('path')
     .data(city)
     .enter()
     .append('path')
-    .attr({ class: d => d.properties['C_Name'], d: path })
+    .attr({ class: d => d.properties['C_Name'], d: this.path })
     .on('click', d => {
       clickCity.call(this, d)
     })
@@ -54,7 +53,7 @@ createMap.prototype.draw = function ({ city, town }) {
     .append('path')
     .attr({
       class: d => `${d.properties['C_Name']} ${d.properties['T_Name']}`,
-      d: path,
+      d: this.path,
     })
     .on('click', d => {
       clickedTown.call(this, d)
@@ -113,6 +112,9 @@ createMap.prototype.update = function ({ area = this.area, year = this.year }) {
     .rollup(d => d3.sum(d, dd => dd['確定病例數']))
     .entries(data)
 
+  // Remove focused element
+  d3.select('.focus').classed('focus', false)
+
   // Update overview
   d3.select('#overview .total').html(total)
   d3.select('#overview .area').html(area.replace(/ /g, ''))
@@ -128,6 +130,24 @@ createMap.prototype.update = function ({ area = this.area, year = this.year }) {
 
   this.area = area
   this.year = year
+}
+
+createMap.prototype.reset = function () {
+  d3.selectAll('.active').classed('active', false)
+
+  // Zoom out
+  for (let target of ['city', 'town']) {
+    d3.select(`#map g.${target}`)
+      .transition()
+      .duration(750)
+      .style('stroke-width', '1px')
+      .attr('transform', '')
+  }
+
+  this.update({ area: '台灣' })
+
+  // Update navbar
+  d3.selectAll('nav .city, nav .town').html('')
 }
 
 function clickCity(d) {
@@ -146,6 +166,7 @@ function clickCity(d) {
     scale = 0.9 / Math.max(dx / this.width, dy / this.height),
     translate = [this.width / 2 - scale * x, this.height / 2 - scale * y]
 
+  // Zoom in
   for (let target of ['city', 'town']) {
     d3.select(`#map g.${target}`)
       .transition()
@@ -161,26 +182,10 @@ function clickCity(d) {
   d3.select('nav .town').html('')
 }
 
-createMap.prototype.reset = function () {
-  d3.selectAll('.active').classed('active', false)
-  this.area = '台灣'
-  for (let target of ['city', 'town']) {
-    d3.select(`#map g.${target}`)
-      .transition()
-      .duration(750)
-      .style('stroke-width', '1px')
-      .attr('transform', '')
-  }
-
-  this.update({ area: '台灣' })
-
-  // Update navbar
-  d3.selectAll('nav .city, nav .town').html('')
-}
-
 function clickedTown(d) {
   const { C_Name: city, T_Name: town } = d.properties
   this.update({ area: `${city} ${town}` })
+  d3.select(`.${city}.${town}`).classed('focus', true)
 
   // Update navbar
   d3.select('nav .city').html(city)

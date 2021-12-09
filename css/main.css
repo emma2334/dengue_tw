@@ -86,6 +86,7 @@ svg#map g.town path.active {
   display: block;
 }
 
+svg#map g path.focus,
 svg#map g path:hover {
   fill: #ffffb6;
   cursor: pointer;
