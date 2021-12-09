@@ -20,7 +20,10 @@ import createMap from './main.js'
     }
   )
 
-  document.getElementById('year').onchange = (e) => {
+  document.getElementById('year').onchange = e => {
     map.changeYear(e.target.value)
   }
+
+  document.querySelector('#map rect.background').onclick = map.reset.bind(map)
+  window.reset = map.reset.bind(map)
 })()
