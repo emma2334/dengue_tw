@@ -47,6 +47,11 @@ nav span.town:before {
   margin: 0 1em;
 }
 
+nav span.city:empty,
+span.town:empty {
+  display: none;
+}
+
 /* -----------------
 
   Map

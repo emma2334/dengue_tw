@@ -25,4 +25,9 @@ import createMap from './main.js'
 
   document.querySelector('#map rect.background').onclick = map.reset.bind(map)
   window.reset = map.reset.bind(map)
+
+  document.querySelector('nav .city').onclick = e => {
+    map.update({ area: e.target.innerText })
+    document.querySelector('nav .town').innerText = ''
+  }
 })()

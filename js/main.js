@@ -19,7 +19,7 @@ export default function createMap() {
     d3.geo
       .mercator()
       .center([121, 24])
-      .scale(this.height / 0.01 / 8.5)
+      .scale(this.height / 0.085)
       .translate([this.width / 2, this.height / 2])
   )
 }
@@ -156,10 +156,9 @@ function clickCity(d) {
 
   this.update({ area })
 
-  // refresh navbar
-  d3.select('nav').html(`
-    <span onclick="reset()">台灣</span>
-    <span class="city" onclick="changeNav()">${area}</span>`)
+  // Update navbar
+  d3.select('nav .city').html(area)
+  d3.select('nav .town').html('')
 }
 
 createMap.prototype.reset = function () {
@@ -175,25 +174,15 @@ createMap.prototype.reset = function () {
 
   this.update({ area: '台灣' })
 
-  // refresh navbar
-  d3.select('nav').html('<span onclick="reset()">台灣</span>')
+  // Update navbar
+  d3.selectAll('nav .city, nav .town').html('')
 }
 
 function clickedTown(d) {
   const { C_Name: city, T_Name: town } = d.properties
   this.update({ area: `${city} ${town}` })
 
-  // refresh navbar
-  d3.select('nav').html(`
-    <span onclick="reset()">台灣</span>
-    <span class="city" onclick="changeNav()">${city}</span>
-    <span class="town" onclick="clickedTown()">${town}</span>`)
-}
-
-function changeNav() {
-  const area = d3.select('span.city').html()
-  d3.select('nav').html(`
-    <span onclick="reset()">台灣</span>
-    <span class="city" onclick="changeNav()">${area}</span>`)
-  this.update({ area })
+  // Update navbar
+  d3.select('nav .city').html(city)
+  d3.select('nav .town').html(town)
 }
