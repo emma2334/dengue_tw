@@ -5,7 +5,7 @@ import {
   drawAbroadChart,
 } from './render.js'
 
-export default function createMap(dengueDataUrl) {
+export default function createMap({ url, ready = () => {} }) {
   // Data
   this.rawData = [] // Raw data of dengue info
   this.year // Selected year
@@ -27,8 +27,9 @@ export default function createMap(dengueDataUrl) {
   // Render map
   this.draw()
   // Apply data
-  d3.json(dengueDataUrl, (err, data) => {
+  d3.json(url, (err, data) => {
     this.applyDengueInfo(data)
+    ready()
   })
 }
 

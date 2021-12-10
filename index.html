@@ -64,17 +64,24 @@
       <span class="town"></span>
     </nav>
     <div class="mask">
-        <div class="spinner">
-            <div class="bounce1"></div>
-            <div class="bounce2"></div>
-            <div class="bounce3"></div>
-        </div>
+      <div class="spinner">
+        <div class="bounce1"></div>
+        <div class="bounce2"></div>
+        <div class="bounce3"></div>
+      </div>
     </div>
     <div id="tooltip" class="hidden"></div>
     <script type="module">
       import createMap from './js/main.js'
       ;(function () {
-        const map = new createMap('./data/Age_County_Gender_061.json')
+        const map = new createMap({
+          url: 'https://emma-proxy.vercel.app/api/eic/Age_County_Gender_061.json',
+          ready: () => {
+            const mask = document.querySelector('.mask')
+            mask.style.opacity = 0
+            mask.addEventListener('transitionend', () => mask.remove())
+          },
+        })
 
         // Change year
         document.getElementById('year').onchange = e => {

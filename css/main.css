@@ -201,6 +201,7 @@ path.line {
   right: 0;
   left: 0;
   background: rgb(0 0 0 / 70%);
+  transition: opacity 1s;
 }
 
 .spinner {
@@ -212,7 +213,7 @@ path.line {
 .spinner > div {
   width: 18px;
   height: 18px;
-  background-color: #FFF;
+  background-color: #fff;
 
   border-radius: 100%;
   display: inline-block;
@@ -231,17 +232,26 @@ path.line {
 }
 
 @-webkit-keyframes sk-bouncedelay {
-  0%, 80%, 100% { -webkit-transform: scale(0) }
-  40% { -webkit-transform: scale(1.0) }
+  0%,
+  80%,
+  100% {
+    -webkit-transform: scale(0);
+  }
+  40% {
+    -webkit-transform: scale(1);
+  }
 }
 
 @keyframes sk-bouncedelay {
-  0%, 80%, 100% { 
+  0%,
+  80%,
+  100% {
     -webkit-transform: scale(0);
     transform: scale(0);
-  } 40% { 
-    -webkit-transform: scale(1.0);
-    transform: scale(1.0);
+  }
+  40% {
+    -webkit-transform: scale(1);
+    transform: scale(1);
   }
 }
 
@@ -253,7 +263,7 @@ path.line {
 
 @media (max-width: 992px) {
   div.container {
-    overflow-y: scroll;
+    overflow: hidden scroll;
   }
   svg#map {
     width: 100vw;
@@ -263,5 +273,6 @@ path.line {
   div.content {
     width: 100vw;
     height: auto;
+    overflow-y: initial;
   }
 }
