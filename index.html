@@ -1,39 +1,67 @@
 <!DOCTYPE html>
 <html lang="zh-tw">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>台灣登革熱地圖</title>
+    <meta name="author" content="emma2334" />
+    <meta
+      name="description"
+      content="2003 年至現今台灣各地登革熱狀況統計分析。"
+    />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,shrink-to-fit=no,user-scalable=no"
+    />
+    <!-- og -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="台灣登革熱地圖" />
+    <meta
+      property="og:description"
+      content="2003 年至現今台灣各地登革熱狀況統計分析。"
+    />
+    <meta property="og:url" content="https://emma2334.github.io/" />
+    <meta property="og:site_name" content="台灣登革熱地圖" />
+    <!-- Titter og -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="台灣登革熱地圖" />
+    <meta
+      name="twitter:description"
+      content="2003 年至現今台灣各地登革熱狀況統計分析。"
+    />
     <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
     <script src="https://d3js.org/topojson.v1.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
-    <link rel="stylesheet" href="./css/main.css">
-</head>
-<body>
+    <link rel="stylesheet" href="./css/main.css" />
+  </head>
+  <body>
     <div class="container">
-        <svg id="map">
-            <rect class="background"></rect>
-        </svg>
-        <div class="content">
-            <div id="overview">
-                <select id="year" onchange="changeYear()"></select>
-                <span class="area">台灣</span>共發現&nbsp;<span class="total">0</span>&nbsp;起登革熱感染
-            </div>
-            <div id="month">
-                <h2>發病月份統計</h2>
-                <svg></svg>
-            </div>
-            <div id="age">
-                <h2>年齡層統計</h2>
-                <svg></svg>
-            </div>
-            <div id="abroad">
-                <h2>境外感染比例</h2>
-                <svg></svg>
-            </div>
+      <svg id="map">
+        <g class="city"></g>
+        <g class="town"></g>
+      </svg>
+      <div class="content">
+        <div id="overview">
+          <select id="year"></select>
+          <span class="area">台灣</span>共發現&nbsp;<span class="total">0</span
+          >&nbsp;起登革熱感染
         </div>
+        <div id="month">
+          <h2>發病月份統計</h2>
+          <svg></svg>
+        </div>
+        <div id="age">
+          <h2>年齡層統計</h2>
+          <svg></svg>
+        </div>
+        <div id="abroad">
+          <h2>境外感染比例</h2>
+          <svg></svg>
+        </div>
+      </div>
     </div>
     <nav>
-        <span onclick="reset()">台灣</span>
+      <span class="root">台灣</span>
+      <span class="city"></span>
+      <span class="town"></span>
     </nav>
     <div class="mask">
         <div class="spinner">
@@ -43,6 +71,23 @@
         </div>
     </div>
     <div id="tooltip" class="hidden"></div>
-    <script src="./js/main.js"></script>
-</body>
+    <script type="module">
+      import createMap from './js/main.js'
+      ;(function () {
+        const map = new createMap('./data/Age_County_Gender_061.json')
+
+        // Change year
+        document.getElementById('year').onchange = e => {
+          map.update({ year: e.target.value })
+        }
+
+        // Navbar event
+        document.querySelector('nav .root').onclick = map.reset.bind(map)
+        document.querySelector('nav .city').onclick = e => {
+          map.update({ area: e.target.innerText })
+          document.querySelector('nav .town').innerText = ''
+        }
+      })()
+    </script>
+  </body>
 </html>
