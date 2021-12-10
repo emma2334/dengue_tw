@@ -30,7 +30,6 @@
     />
     <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
     <script src="https://d3js.org/topojson.v1.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
     <link rel="stylesheet" href="./css/main.css" />
   </head>
   <body>
@@ -60,11 +59,28 @@
       </div>
     </div>
     <nav>
-      <span onclick="reset()">台灣</span>
+      <span class="root">台灣</span>
       <span class="city"></span>
       <span class="town"></span>
     </nav>
     <div id="tooltip" class="hidden"></div>
-    <script type="module" src="./js/index.js"></script>
+    <script type="module">
+      import createMap from './js/main.js'
+      ;(function () {
+        const map = new createMap('./data/Age_County_Gender_061.json')
+
+        // Change year
+        document.getElementById('year').onchange = e => {
+          map.update({ year: e.target.value })
+        }
+
+        // Navbar event
+        document.querySelector('nav .root').onclick = map.reset.bind(map)
+        document.querySelector('nav .city').onclick = e => {
+          map.update({ area: e.target.innerText })
+          document.querySelector('nav .town').innerText = ''
+        }
+      })()
+    </script>
   </body>
 </html>

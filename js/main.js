@@ -5,8 +5,9 @@ import {
   drawAbroadChart,
 } from './render.js'
 
-export default function createMap() {
-  this.rawData // Raw data of dengue info
+export default function createMap(dengueDataUrl) {
+  // Data
+  this.rawData = [] // Raw data of dengue info
   this.year // Selected year
   this.area = '台灣' // Selected area
 
@@ -22,51 +23,63 @@ export default function createMap() {
       .scale(this.height / 0.085)
       .translate([this.width / 2, this.height / 2])
   )
+
+  // Render map
+  this.draw()
+  // Apply data
+  d3.json(dengueDataUrl, (err, data) => {
+    this.applyDengueInfo(data)
+  })
 }
 
-createMap.prototype.draw = function ({ city, town }) {
+createMap.prototype.draw = function () {
   // Append cities
-  d3.select('svg#map g.city')
-    .selectAll('path')
-    .data(city)
-    .enter()
-    .append('path')
-    .attr({ class: d => d.properties['C_Name'], d: this.path })
-    .on('click', d => {
-      clickCity.call(this, d)
-    })
-    .on('mouseover', d => {
-      d3.select('#tooltip')
-        .html(d.properties['C_Name'])
-        .style({ left: `${d3.event.pageX}px`, top: `${d3.event.pageY}px` })
-      d3.select('#tooltip').classed('hidden', false)
-    })
-    .on('mouseout', d => {
-      d3.select('#tooltip').classed('hidden', true)
-    })
+  d3.json('./data/city.json', data => {
+    d3.select('svg#map g.city')
+      .selectAll('path')
+      .data(topojson.feature(data, data.objects.city).features)
+      .enter()
+      .append('path')
+      .attr({ class: d => d.properties['C_Name'], d: this.path })
+      .on('click', clickCity.bind(this))
+      .on('mouseover', d => {
+        d3.select('#tooltip')
+          .html(d.properties['C_Name'])
+          .style({ left: `${d3.event.pageX}px`, top: `${d3.event.pageY}px` })
+          .classed('hidden', false)
+      })
+      .on('mouseout', d => {
+        d3.select('#tooltip').classed('hidden', true)
+      })
+  })
 
   // Append towns
-  d3.select('svg#map g.town')
-    .selectAll('path')
-    .data(town)
-    .enter()
-    .append('path')
-    .attr({
-      class: d => `${d.properties['C_Name']} ${d.properties['T_Name']}`,
-      d: this.path,
-    })
-    .on('click', d => {
-      clickedTown.call(this, d)
-    })
-    .on('mouseover', d => {
-      d3.select('#tooltip')
-        .html(d.properties['T_Name'])
-        .style({ left: `${d3.event.pageX}px`, top: `${d3.event.pageY}px` })
-      d3.select('#tooltip').classed('hidden', false)
-    })
-    .on('mouseout', function (d) {
-      d3.select('#tooltip').classed('hidden', true)
-    })
+  d3.json('./data/town.json', data => {
+    d3.select('svg#map g.town')
+      .selectAll('path')
+      .data(topojson.feature(data, data.objects.town).features)
+      .enter()
+      .append('path')
+      .attr({
+        class: d => `${d.properties['C_Name']} ${d.properties['T_Name']}`,
+        d: this.path,
+      })
+      .on('click', clickedTown.bind(this))
+      .on('mouseover', d => {
+        d3.select('#tooltip')
+          .html(d.properties['T_Name'])
+          .style({ left: `${d3.event.pageX}px`, top: `${d3.event.pageY}px` })
+          .classed('hidden', false)
+      })
+      .on('mouseout', function (d) {
+        d3.select('#tooltip').classed('hidden', true)
+      })
+  })
+
+  // Click background to return
+  document.querySelector('svg#map').onclick = e => {
+    if (e.target === e.currentTarget) this.reset.call(this)
+  }
 }
 
 createMap.prototype.applyDengueInfo = function (data) {

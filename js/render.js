@@ -1,6 +1,9 @@
 export { paintMap, drawMonthChart, drawAgeChart, drawAbroadChart }
 
 function paintMap(data) {
+  // Clear scaled color
+  d3.selectAll('svg#map path').attr({ fill: '#fff' })
+
   // Generate color scale
   const color = d3.scale.linear().domain([0, 10]).range(['#E4E4E4', '#B50C0C'])
 
@@ -16,9 +19,7 @@ function paintMap(data) {
 
   // Paint
   cityCount.forEach(e => {
-    d3.select('.' + e.key).attr({
-      fill: color(scale(e.values)),
-    })
+    d3.select('.' + e.key).attr({ fill: color(scale(e.values)) })
   })
 
   // Group data by town
@@ -77,11 +78,7 @@ function drawMonthChart(data) {
     .attr('transform', 'translate(40,40)')
     .call(yAxis)
     .append('text')
-    .attr({
-      x: -10,
-      y: y(y.ticks().pop()) - 10,
-      dy: '-0.32em',
-    })
+    .attr({ x: -10, y: -10, dy: '-0.32em' })
     .text('人數')
 
   // line
@@ -242,7 +239,7 @@ function drawAgeChart(data) {
     })
     .call(yAxis)
     .append('text')
-    .attr({ x: -10, y: y(y.ticks().pop()) - 10, dy: '-0.32em' })
+    .attr({ x: -10, y: -10, dy: '-0.32em' })
     .text('人數')
 }
 
